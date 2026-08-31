@@ -1,0 +1,53 @@
+# RS-InternVL Tiny-Subset Overfitting Configuration
+# Purpose: Feasibility testing and gradient flow verification on deterministic tiny training subset.
+
+dataset:
+  train_manifest: "data/manifests/manifest_train.jsonl"
+  data_root: "data/bigearthnet_txt"
+  num_samples: 16
+  seed: 42
+  img_size: 120
+  s1_bands:
+    - "VV"
+    - "VH"
+  s2_bands:
+    - "B02"
+    - "B03"
+    - "B04"
+    - "B05"
+    - "B06"
+    - "B07"
+    - "B08"
+    - "B8A"
+    - "B11"
+    - "B12"
+
+model:
+  checkpoint: null
+  freeze_s1_encoder: false
+  freeze_s2_encoder: false
+  freeze_llm: false
+  # Architecture dimensions
+  num_hidden_layers: 4
+  num_attention_heads: 14
+  num_key_value_heads: 2
+  intermediate_size: 4864
+  llm_hidden_dim: 896
+  vocab_size: 151674
+
+training:
+  batch_size: 2
+  epochs: 20
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  gradient_accumulation_steps: 1
+  max_seq_length: 512
+  mixed_precision: "no"  # Options: "fp16", "bf16", "no"
+  seed: 42
+  log_every_n_steps: 1
+  clip_grad_norm: 1.0
+  save_best: true
+
+output:
+  checkpoint_dir: "checkpoints/tiny_overfit"
+  log_dir: "outputs/tiny_overfit"
