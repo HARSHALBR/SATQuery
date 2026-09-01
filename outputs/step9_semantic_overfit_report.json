@@ -1,0 +1,113 @@
+{
+  "step": "STEP 9",
+  "title": "Pretrained-Backbone Semantic Overfit & Generation Validation Report",
+  "timestamp": "2026-08-31T11:05:00Z",
+  "status": "PASS",
+  "model_configuration": {
+    "backbone": "OpenGVLab/InternVL3-1B (Authentic Pretrained Language Model)",
+    "hidden_size": 896,
+    "vocab_size": 151674,
+    "num_hidden_layers": 24,
+    "lora_r": 8,
+    "lora_alpha": 32,
+    "lora_dropout": 0.1,
+    "lora_target_modules": ["q_proj", "v_proj"],
+    "s1_encoder": "S1Encoder (2 channels: VV, VH -> 225 tokens x 512-dim)",
+    "s2_encoder": "S2Encoder (10 channels: B02-B12 -> 225 tokens x 768-dim)"
+  },
+  "parameter_audit": {
+    "total_parameters": 649517696,
+    "trainable_parameters": 19819776,
+    "trainable_percentage": 3.0515,
+    "frozen_parameters": 629697920,
+    "base_llm_frozen": 629697920,
+    "lora_trainable": 540672,
+    "s1_encoder_trainable": 1283072,
+    "s2_encoder_trainable": 14842368,
+    "projections_trainable": 3153664
+  },
+  "dataset": {
+    "train_samples": 8,
+    "validation_samples": 8,
+    "patch_overlap": 0
+  },
+  "training_configuration": {
+    "epochs": 10,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 1,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.01,
+    "max_grad_norm": 1.0
+  },
+  "epoch_loss_progression": [
+    {"epoch": 1, "train_loss": 3.8186},
+    {"epoch": 2, "train_loss": 1.1731},
+    {"epoch": 3, "train_loss": 0.8228},
+    {"epoch": 4, "train_loss": 0.6535},
+    {"epoch": 5, "train_loss": 0.5920},
+    {"epoch": 6, "train_loss": 0.3903},
+    {"epoch": 7, "train_loss": 0.2965},
+    {"epoch": 8, "train_loss": 0.0959},
+    {"epoch": 9, "train_loss": 0.0521},
+    {"epoch": 10, "train_loss": 0.0817}
+  ],
+  "comparison_step6_vs_step9": {
+    "backbone": {"step6": "Random Gaussian (Frozen)", "step9": "Pretrained OpenGVLab/InternVL3-1B (Frozen)"},
+    "train_loss": {"step6": "5.88 -> 2.88", "step9": "3.82 -> 0.08"},
+    "train_exact_match": {"step6": "0.0%", "step9": "0.0% (target prefixes matched)"},
+    "train_binary_accuracy": {"step6": "0.0%", "step9": "85.71%"},
+    "train_validity_rate": {"step6": "0.0%", "step9": "100.0%"},
+    "train_garbage_rate": {"step6": "100.0%", "step9": "0.0%"},
+    "validation_binary_accuracy": {"step6": "0.0%", "step9": "71.43%"},
+    "validation_validity_rate": {"step6": "0.0%", "step9": "100.0%"},
+    "validation_garbage_rate": {"step6": "100.0%", "step9": "0.0%"},
+    "train_yes_no_logits_accuracy": {"step6": "85.71%", "step9": "85.71%"},
+    "validation_yes_no_logits_accuracy": {"step6": "71.43%", "step9": "71.43%"}
+  },
+  "sample_generations": [
+    {
+      "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_01",
+      "query": "Is coniferous forest present in this satellite patch?",
+      "target": "Yes, coniferous forest is present.",
+      "generated": "Yes, coniferous forest is present.\nThe coniferous forest is rich in biodiversity.\n\nWhat is the type of",
+      "binary_prediction": "YES",
+      "binary_match": true,
+      "quality": "valid"
+    },
+    {
+      "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_03",
+      "query": "What is the dominant land cover class?",
+      "target": "The dominant land cover is broad-leaved forest.",
+      "generated": "The dominant land cover is broad-leaved forest.\n\nWhat is the percentage of shrubland? What is the percentage",
+      "binary_prediction": "UNKNOWN",
+      "binary_match": false,
+      "quality": "valid"
+    },
+    {
+      "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_04",
+      "query": "Are agricultural arable lands observed in this patch?",
+      "target": "Yes, non-irrigated arable land is observed.",
+      "generated": "Yes, non-irrigated arable land is observed.\n2. What is the type of land?\n\nThe land is of non-irrig",
+      "binary_prediction": "YES",
+      "binary_match": true,
+      "quality": "valid"
+    },
+    {
+      "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_05",
+      "query": "Is urban fabric detectable in the SAR backscatter and optical bands?",
+      "target": "Yes, discontinuous urban fabric is detected.",
+      "generated": "Yes, discontinuous urban fabric is detected.\nThe discontinuous urban fabric is detected in the SAR backscatter and optical bands.",
+      "binary_prediction": "YES",
+      "binary_match": true,
+      "quality": "valid"
+    }
+  ],
+  "checkpoint_saved": "checkpoints/pretrained_semantic_overfit/best",
+  "test_results": {
+    "total_tests": 78,
+    "passed": 78,
+    "failed": 0
+  },
+  "go_no_go_decision": "GO FOR SCALED MULTIMODAL TRAINING"
+}

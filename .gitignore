@@ -1,4 +1,9 @@
 # Python
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+ENV/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -56,3 +61,45 @@ temp/
 # Coverage
 .coverage
 htmlcov/
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Secrets & Environment Variables
+.env
+.env.*
+*.pem
+*.key
+*.secret
+secrets/
+
+# Large Model Checkpoints & Binary Weights
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+*.onnx
+*.engine
+
+# Raw Satellite Datasets & Large Archives
+*.tif
+*.tiff
+*.nc
+*.h5
+*.hdf5
+*.tar
+*.tar.gz
+*.zip
+*.7z
+images_s1/
+images_s2/
+BigEarthNet/
+
+# Logs & Temporary Files
+logs/
+*.log
+scratch/
+.system_generated/

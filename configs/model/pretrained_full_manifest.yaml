@@ -1,0 +1,77 @@
+﻿# RS-InternVL Step 10: Pretrained Full-Manifest Training Configuration
+# Official baseline training on all 32 train + 8 validation samples.
+
+model:
+  backbone: OpenGVLab/InternVL3-1B
+  config_file: configs/model/internvl3_1b_config.json
+  pretrained_backbone: true
+  img_size: 120
+  s1_channels: 2
+  s1_hidden_dim: 512
+  s2_channels: 10
+  s2_hidden_dim: 768
+  projection_hidden_dim: 1024
+  projection_dropout: 0.0
+  freeze_s1_encoder: false
+  freeze_s2_encoder: false
+  freeze_llm: true
+
+lora:
+  enabled: true
+  r: 8
+  alpha: 32
+  dropout: 0.1
+  bias: none
+  target_modules:
+    - q_proj
+    - v_proj
+
+dataset:
+  data_root: data/bigearthnet_txt
+  train_manifest: data/manifests/manifest_train.jsonl
+  validation_manifest: data/manifests/manifest_validation.jsonl
+  train_samples: 32
+  validation_samples: 8
+  seed: 42
+  img_size: 120
+  s1_bands:
+    - VV
+    - VH
+  s2_bands:
+    - B02
+    - B03
+    - B04
+    - B05
+    - B06
+    - B07
+    - B08
+    - B8A
+    - B11
+    - B12
+
+training:
+  epochs: 25
+  eval_epochs: [0, 1, 2, 5, 10, 15, 20, 25]
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  warmup_steps: 8
+  lr_scheduler: cosine
+  seed: 42
+
+generation:
+  max_new_tokens: 32
+  do_sample: false
+
+evaluation:
+  normalize_text: true
+  evaluate_binary_presence: true
+  evaluate_exact_match: true
+  evaluate_mcq: true
+
+output:
+  checkpoint_dir: checkpoints/pretrained_lora
+  output_dir: outputs/pretrained_lora
+  save_best_only: true

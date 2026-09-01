@@ -1,0 +1,58 @@
+[
+  {
+    "index": 0,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_01",
+    "query": "Is coniferous forest present in this satellite patch?",
+    "target": "Yes, coniferous forest is present.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 1,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_02",
+    "query": "Is water body present in this area?",
+    "target": "No, water body is not present.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 2,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_03",
+    "query": "What is the dominant land cover class?",
+    "target": "The dominant land cover is broad-leaved forest.",
+    "claim_type": "mcq"
+  },
+  {
+    "index": 3,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_04",
+    "query": "Are agricultural arable lands observed in this patch?",
+    "target": "Yes, non-irrigated arable land is observed.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 4,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_05",
+    "query": "Is urban fabric detectable in the SAR backscatter and optical bands?",
+    "target": "Yes, discontinuous urban fabric is detected.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 5,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_06",
+    "query": "Does this patch contain inland marshes or peat bogs?",
+    "target": "Yes, inland marshes are present.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 6,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_07",
+    "query": "Is pastures land cover present in this scene?",
+    "target": "Yes, pastures are present in the patch.",
+    "claim_type": "binary"
+  },
+  {
+    "index": 7,
+    "patch_id": "S2A_MSIL2A_20170613T101031_N0205_R022_T32ULD_22_08",
+    "query": "Is transitional woodland-shrub present?",
+    "target": "Yes, transitional woodland-shrub is present.",
+    "claim_type": "binary"
+  }
+]

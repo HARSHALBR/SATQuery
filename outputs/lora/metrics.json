@@ -1,0 +1,234 @@
+{
+  "model_backbone": "OpenGVLab/InternVL3-1B",
+  "device": "cpu",
+  "target_lora_modules": [
+    "q_proj",
+    "v_proj"
+  ],
+  "total_parameters": 649517696,
+  "trainable_parameters": 19819776,
+  "trainable_percentage": 3.0515,
+  "s1_encoder_trainable": 1283072,
+  "s2_encoder_trainable": 14842368,
+  "projections_trainable": 3153664,
+  "lora_trainable": 540672,
+  "frozen_llm": 629697920,
+  "train_samples": 32,
+  "val_samples": 8,
+  "batch_size": 1,
+  "gradient_accumulation_steps": 4,
+  "epochs": 20,
+  "total_steps": 160,
+  "initial_train_loss": 10.812819,
+  "final_train_loss": 5.837349,
+  "initial_validation_loss": 12.115445,
+  "final_validation_loss": 6.051975,
+  "best_validation_loss": 6.051975,
+  "overall_throughput_samples_per_sec": 0.19,
+  "total_training_time_seconds": 3346.78,
+  "peak_vram_mb": null,
+  "checkpoint_dir": "checkpoints\\lora\\latest",
+  "best_checkpoint_dir": "checkpoints\\lora\\best",
+  "epoch_records": [
+    {
+      "epoch": 1,
+      "train_loss": 10.812819,
+      "validation_loss": 10.227227,
+      "learning_rate": 0.0001,
+      "gradient_norm": 9.304057,
+      "epoch_time_seconds": 159.5,
+      "samples_per_second": 0.2,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 2,
+      "train_loss": 9.541896,
+      "validation_loss": 9.279243,
+      "learning_rate": 0.0001,
+      "gradient_norm": 11.270266,
+      "epoch_time_seconds": 146.78,
+      "samples_per_second": 0.22,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 3,
+      "train_loss": 8.985845,
+      "validation_loss": 8.729338,
+      "learning_rate": 0.0001,
+      "gradient_norm": 9.909074,
+      "epoch_time_seconds": 144.39,
+      "samples_per_second": 0.22,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 4,
+      "train_loss": 8.544038,
+      "validation_loss": 8.366523,
+      "learning_rate": 0.0001,
+      "gradient_norm": 9.546462,
+      "epoch_time_seconds": 143.6,
+      "samples_per_second": 0.22,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 5,
+      "train_loss": 8.139747,
+      "validation_loss": 7.999755,
+      "learning_rate": 0.0001,
+      "gradient_norm": 12.313146,
+      "epoch_time_seconds": 154.81,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 6,
+      "train_loss": 7.804199,
+      "validation_loss": 7.71474,
+      "learning_rate": 0.0001,
+      "gradient_norm": 11.931345,
+      "epoch_time_seconds": 152.82,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 7,
+      "train_loss": 7.508479,
+      "validation_loss": 7.487697,
+      "learning_rate": 0.0001,
+      "gradient_norm": 11.041953,
+      "epoch_time_seconds": 165.08,
+      "samples_per_second": 0.19,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 8,
+      "train_loss": 7.26096,
+      "validation_loss": 7.287255,
+      "learning_rate": 0.0001,
+      "gradient_norm": 14.63758,
+      "epoch_time_seconds": 150.17,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 9,
+      "train_loss": 7.061191,
+      "validation_loss": 7.167765,
+      "learning_rate": 0.0001,
+      "gradient_norm": 12.631702,
+      "epoch_time_seconds": 150.78,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 10,
+      "train_loss": 6.905431,
+      "validation_loss": 6.990647,
+      "learning_rate": 0.0001,
+      "gradient_norm": 14.747814,
+      "epoch_time_seconds": 150.37,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 11,
+      "train_loss": 6.743788,
+      "validation_loss": 6.81265,
+      "learning_rate": 0.0001,
+      "gradient_norm": 12.967879,
+      "epoch_time_seconds": 146.82,
+      "samples_per_second": 0.22,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 12,
+      "train_loss": 6.601193,
+      "validation_loss": 6.734323,
+      "learning_rate": 0.0001,
+      "gradient_norm": 14.369985,
+      "epoch_time_seconds": 149.4,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 13,
+      "train_loss": 6.445549,
+      "validation_loss": 6.571872,
+      "learning_rate": 0.0001,
+      "gradient_norm": 14.199171,
+      "epoch_time_seconds": 156.63,
+      "samples_per_second": 0.2,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 14,
+      "train_loss": 6.342834,
+      "validation_loss": 6.489958,
+      "learning_rate": 0.0001,
+      "gradient_norm": 15.618054,
+      "epoch_time_seconds": 150.18,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 15,
+      "train_loss": 6.256874,
+      "validation_loss": 6.440439,
+      "learning_rate": 0.0001,
+      "gradient_norm": 14.990793,
+      "epoch_time_seconds": 153.41,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 16,
+      "train_loss": 6.155758,
+      "validation_loss": 6.581507,
+      "learning_rate": 0.0001,
+      "gradient_norm": 15.468752,
+      "epoch_time_seconds": 154.91,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 17,
+      "train_loss": 6.059569,
+      "validation_loss": 6.240119,
+      "learning_rate": 0.0001,
+      "gradient_norm": 16.305673,
+      "epoch_time_seconds": 149.11,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 18,
+      "train_loss": 5.991479,
+      "validation_loss": 6.15309,
+      "learning_rate": 0.0001,
+      "gradient_norm": 16.461187,
+      "epoch_time_seconds": 152.94,
+      "samples_per_second": 0.21,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 19,
+      "train_loss": 5.897679,
+      "validation_loss": 6.061126,
+      "learning_rate": 0.0001,
+      "gradient_norm": 15.519068,
+      "epoch_time_seconds": 159.45,
+      "samples_per_second": 0.2,
+      "peak_vram_mb": null
+    },
+    {
+      "epoch": 20,
+      "train_loss": 5.837349,
+      "validation_loss": 6.051975,
+      "learning_rate": 0.0001,
+      "gradient_norm": 16.855139,
+      "epoch_time_seconds": 162.44,
+      "samples_per_second": 0.2,
+      "peak_vram_mb": null
+    }
+  ]
+}

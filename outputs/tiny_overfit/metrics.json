@@ -1,0 +1,18 @@
+{
+  "device": "cpu",
+  "num_samples": 16,
+  "batch_size": 2,
+  "epochs": 10,
+  "total_steps": 80,
+  "trainable_parameters": 350729344,
+  "frozen_parameters": 0,
+  "total_parameters": 350729344,
+  "initial_loss": 9.590859,
+  "final_loss": 0.809701,
+  "best_loss": 0.809701,
+  "loss_decreased": true,
+  "loss_reduction_pct": 91.56,
+  "training_time_seconds": 474.38,
+  "checkpoint_path": "checkpoints\\tiny_overfit\\final_checkpoint.pt",
+  "best_checkpoint_path": "checkpoints\\tiny_overfit\\best_checkpoint.pt"
+}

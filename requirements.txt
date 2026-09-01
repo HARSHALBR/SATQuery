@@ -1,3 +1,22 @@
+numpy
+pandas
+matplotlib
+rasterio
+geopandas
+shapely
+scipy
+scikit-image
+pyyaml
+tqdm
+torch
+torchvision
+transformers
+accelerate
+peft
+safetensors
+pyarrow
+pytest
+
 # Full requirements — install both core and remote-sensing dependencies
 -r requirements-core.txt
 -r requirements-rs.txt

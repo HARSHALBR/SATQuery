@@ -1,0 +1,94 @@
+{
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "train_loss": null,
+      "train_exact_match": 0.0,
+      "train_binary_acc": 0.0,
+      "train_garbage_rate": 37.5,
+      "train_yn_logits_acc": 85.71428571428571,
+      "val_exact_match": 0.0,
+      "val_binary_acc": 0.0,
+      "val_garbage_rate": 37.5,
+      "val_yn_logits_acc": 71.42857142857143
+    },
+    {
+      "epoch": 1,
+      "train_loss": 3.8186,
+      "train_exact_match": 0.0,
+      "train_binary_acc": 0.0,
+      "train_garbage_rate": 12.5,
+      "train_yn_logits_acc": 71.42857142857143,
+      "val_exact_match": 0.0,
+      "val_binary_acc": 0.0,
+      "val_garbage_rate": 25.0,
+      "val_yn_logits_acc": 71.42857142857143
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.1731,
+      "train_exact_match": 0.0,
+      "train_binary_acc": 0.0,
+      "train_garbage_rate": 25.0,
+      "train_yn_logits_acc": 85.71428571428571,
+      "val_exact_match": 0.0,
+      "val_binary_acc": 0.0,
+      "val_garbage_rate": 12.5,
+      "val_yn_logits_acc": 71.42857142857143
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.592,
+      "train_exact_match": 0.0,
+      "train_binary_acc": 85.71,
+      "train_garbage_rate": 0.0,
+      "train_yn_logits_acc": 85.71428571428571,
+      "val_exact_match": 0.0,
+      "val_binary_acc": 71.43,
+      "val_garbage_rate": 0.0,
+      "val_yn_logits_acc": 71.42857142857143
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.0817,
+      "train_exact_match": 0.0,
+      "train_binary_acc": 85.71,
+      "train_garbage_rate": 0.0,
+      "train_yn_logits_acc": 85.71428571428571,
+      "val_exact_match": 0.0,
+      "val_binary_acc": 71.43,
+      "val_garbage_rate": 0.0,
+      "val_yn_logits_acc": 71.42857142857143
+    }
+  ],
+  "final_train_metrics": {
+    "total_samples": 8,
+    "exact_match_accuracy": 0.0,
+    "binary_accuracy": 0.8571,
+    "binary_unknown_rate": 0.0,
+    "generation_validity_rate": 1.0,
+    "garbage_rate": 0.0,
+    "repetition_rate": 0.0,
+    "empty_rate": 0.0,
+    "exact_match_pct": 0.0,
+    "binary_accuracy_pct": 85.71,
+    "validity_rate_pct": 100.0,
+    "garbage_rate_pct": 0.0
+  },
+  "final_validation_metrics": {
+    "total_samples": 8,
+    "exact_match_accuracy": 0.0,
+    "binary_accuracy": 0.7143,
+    "binary_unknown_rate": 0.0,
+    "generation_validity_rate": 1.0,
+    "garbage_rate": 0.0,
+    "repetition_rate": 0.0,
+    "empty_rate": 0.0,
+    "exact_match_pct": 0.0,
+    "binary_accuracy_pct": 71.43,
+    "validity_rate_pct": 100.0,
+    "garbage_rate_pct": 0.0
+  },
+  "final_train_yn_logits_acc": 85.71428571428571,
+  "final_val_yn_logits_acc": 71.42857142857143
+}
