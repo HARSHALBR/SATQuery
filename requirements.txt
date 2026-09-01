@@ -1,0 +1,3 @@
+# Full requirements — install both core and remote-sensing dependencies
+-r requirements-core.txt
+-r requirements-rs.txt

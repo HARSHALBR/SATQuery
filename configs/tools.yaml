@@ -1,0 +1,263 @@
+# ===========================================================================
+# SATQuery AI — Tool Registry Configuration
+# ===========================================================================
+# Every tool listed here is a CONTRACT.  The applicability block is
+# machine-readable and evaluated by ToolRegistry.check_applicability().
+# ===========================================================================
+
+tools:
+  # -----------------------------------------------------------------------
+  # 1. Input Validation
+  # -----------------------------------------------------------------------
+  - name: validate_inputs
+    description: >-
+      Validate uploaded images — file format, metadata, bands, CRS,
+      resolution, NoData, valid-pixel fraction, and quality.
+    input_schema:
+      observations: "list[ObservationInput]"
+    output_schema:
+      validation_passed: "bool"
+      issues: "list[str]"
+      quality: "QualityReport"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 1
+      requires_temporal: false
+      requires_registration: false
+    priority: 100
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 2. Remote-Sensing VLM
+  # -----------------------------------------------------------------------
+  - name: run_rs_vlm
+    description: >-
+      Run the RS-adapted Vision-Language Model to produce a semantic
+      interpretation or claim about the imagery.
+    input_schema:
+      image: "image_path"
+      query: "str"
+    output_schema:
+      answer: "str"
+      claim: "str"
+      region: "optional[dict]"
+      model_score: "float"
+      model_version: "str"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 1
+      requires_temporal: false
+      requires_registration: false
+      prerequisite_tools:
+        - validate_inputs
+    priority: 90
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 3. Grounding
+  # -----------------------------------------------------------------------
+  - name: grounding
+    description: >-
+      Localize a detected feature or change within the image and return
+      bounding regions.
+    input_schema:
+      image: "image_path"
+      query: "str"
+    output_schema:
+      regions: "list[dict]"
+      model_version: "str"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 1
+      requires_temporal: false
+      requires_registration: false
+      prerequisite_tools:
+        - validate_inputs
+    priority: 80
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 4. NDVI Delta
+  # -----------------------------------------------------------------------
+  - name: ndvi_delta
+    description: >-
+      Compute NDVI for two time periods and return the per-pixel delta.
+    input_schema:
+      image_t1: "image_path"
+      image_t2: "image_path"
+    output_schema:
+      ndvi_t1: "float"
+      ndvi_t2: "float"
+      delta_ndvi: "float"
+      valid_pixel_fraction: "float"
+    applicability:
+      required_modalities:
+        - optical
+      required_bands:
+        - red
+        - nir
+      min_observations: 2
+      requires_temporal: true
+      requires_registration: true
+      min_valid_pixel_fraction: 0.5
+      prerequisite_tools:
+        - validate_inputs
+    priority: 70
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 5. NDBI Delta
+  # -----------------------------------------------------------------------
+  - name: ndbi_delta
+    description: >-
+      Compute NDBI for two time periods and return the per-pixel delta.
+    input_schema:
+      image_t1: "image_path"
+      image_t2: "image_path"
+    output_schema:
+      ndbi_t1: "float"
+      ndbi_t2: "float"
+      delta_ndbi: "float"
+      valid_pixel_fraction: "float"
+    applicability:
+      required_modalities:
+        - optical
+      required_bands:
+        - swir
+        - nir
+      min_observations: 2
+      requires_temporal: true
+      requires_registration: true
+      min_valid_pixel_fraction: 0.5
+      prerequisite_tools:
+        - validate_inputs
+    priority: 70
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 6. SAR Change
+  # -----------------------------------------------------------------------
+  - name: sar_change
+    description: >-
+      Detect change using SAR backscatter analysis between two dates.
+    input_schema:
+      sar_t1: "image_path"
+      sar_t2: "image_path"
+    output_schema:
+      change_detected: "bool"
+      change_magnitude: "float"
+      region: "optional[dict]"
+    applicability:
+      required_modalities:
+        - sar
+      required_bands: []
+      min_observations: 2
+      requires_temporal: true
+      requires_registration: true
+      prerequisite_tools:
+        - validate_inputs
+    priority: 60
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 7. Change Statistics
+  # -----------------------------------------------------------------------
+  - name: change_statistics
+    description: >-
+      Compute pixel-level change statistics from a delta map.
+    input_schema:
+      delta_map: "str"
+      valid_mask: "str"
+      threshold: "float"
+    output_schema:
+      total_valid_pixels: "int"
+      decrease_pixel_fraction: "float"
+      increase_pixel_fraction: "float"
+      mean_delta: "float"
+      threshold_used: "float"
+      change_mask: "optional[str]"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 2
+      requires_temporal: true
+      requires_registration: true
+      prerequisite_tools:
+        - validate_inputs
+    priority: 65
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 8. Area Measurement
+  # -----------------------------------------------------------------------
+  - name: area_measurement
+    description: >-
+      Measure the geographic area of a detected or changed region.
+    input_schema:
+      region: "dict"
+      crs: "str"
+    output_schema:
+      area_sq_m: "float"
+      area_sq_km: "float"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 1
+      requires_temporal: false
+      requires_registration: false
+      prerequisite_tools:
+        - validate_inputs
+    priority: 50
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 9. Compare Evidence
+  # -----------------------------------------------------------------------
+  - name: compare_evidence
+    description: >-
+      Compare a VLM claim against collected evidence records and
+      produce a SUPPORTED / UNCERTAIN / INSUFFICIENT status.
+    input_schema:
+      claim: "str"
+      evidence_records: "list[EvidenceRecord]"
+    output_schema:
+      status: "EvidenceStatus"
+      reason: "str"
+      supporting_evidence: "list[str]"
+      conflicting_evidence: "list[str]"
+      limitations: "list[str]"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 0
+      requires_temporal: false
+      requires_registration: false
+      prerequisite_tools: []
+    priority: 30
+    version: "0.1.0"
+
+  # -----------------------------------------------------------------------
+  # 10. Generate Response
+  # -----------------------------------------------------------------------
+  - name: generate_response
+    description: >-
+      Assemble the final structured response for the user, including
+      answer, status, evidence, limitations, and execution trace.
+    input_schema:
+      comparison: "ComparisonResult"
+      evidence: "list[EvidenceRecord]"
+      trace: "ExecutionTrace"
+    output_schema:
+      response: "FinalResponse"
+    applicability:
+      required_modalities: []
+      required_bands: []
+      min_observations: 0
+      requires_temporal: false
+      requires_registration: false
+      prerequisite_tools: []
+    priority: 10
+    version: "0.1.0"

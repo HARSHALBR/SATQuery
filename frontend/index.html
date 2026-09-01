@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SATQuery AI - Prototype Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
+    <div class="max-w-6xl mx-auto py-10 px-6">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-blue-900 mb-2">SATQuery AI</h1>
+            <p class="text-gray-600 text-lg">Evidence-first agentic geospatial intelligence</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Input -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">1. Define Query</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select Scenario (Local Fixtures):</label>
+                    <div class="flex flex-col space-y-2">
+                        <button onclick="loadScenario('A')" class="bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded text-left border border-red-300 transition-colors">
+                            <span class="font-bold">Case A:</span> Wildfire (Decrease)
+                        </button>
+                        <button onclick="loadScenario('B')" class="bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded text-left border border-green-300 transition-colors">
+                            <span class="font-bold">Case B:</span> Stable Forest (No Change)
+                        </button>
+                        <button onclick="loadScenario('C')" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-4 rounded text-left border border-yellow-300 transition-colors">
+                            <span class="font-bold">Case C:</span> Agriculture (Temporary Harvest)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="queryInput" class="block text-sm font-semibold text-gray-700 mb-1">Natural Language Query:</label>
+                    <textarea id="queryInput" rows="2" class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. Has vegetation decreased severely?"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">T1 Observation Path:</label>
+                    <input type="text" id="t1Path" class="w-full border border-gray-300 rounded p-2 text-sm bg-gray-50 focus:outline-none" readonly>
+                    
+                    <label class="block text-sm font-semibold text-gray-700 mb-1 mt-3">T2 Observation Path:</label>
+                    <input type="text" id="t2Path" class="w-full border border-gray-300 rounded p-2 text-sm bg-gray-50 focus:outline-none" readonly>
+                </div>
+
+                <button onclick="runAnalysis()" id="analyzeBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow-md transition-colors flex justify-center items-center">
+                    <span>Execute Pipeline</span>
+                </button>
+            </div>
+
+            <!-- Right Column: Output -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">2. Pipeline Results</h2>
+                
+                <!-- Loading State -->
+                <div id="loadingState" class="hidden flex-col items-center justify-center flex-grow py-20">
+                    <div class="loader mb-4"></div>
+                    <p class="text-gray-600 font-medium animate-pulse" id="loadingText">Executing Remote Sensing & VLM Pipeline...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="flex flex-col items-center justify-center flex-grow py-20 text-gray-400">
+                    <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p>Select a scenario and click execute to see results.</p>
+                </div>
+
+                <!-- Results View -->
+                <div id="resultsView" class="hidden space-y-6">
+                    <!-- Top Status Card -->
+                    <div class="p-4 rounded-lg border flex items-center justify-between" id="statusCard">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Final Status</p>
+                            <h3 class="text-2xl font-black" id="finalStatus">SUPPORTED</h3>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Trace ID</p>
+                            <p class="text-sm font-mono text-gray-700" id="traceId">uuid-xyz</p>
+                        </div>
+                    </div>
+
+                    <!-- Final Answer -->
+                    <div>
+                        <h4 class="text-lg font-bold border-b pb-2 mb-3">Verified Answer</h4>
+                        <p class="text-gray-800 text-lg bg-gray-50 p-4 rounded border-l-4 border-blue-500" id="finalAnswer"></p>
+                        <div id="limitationsBox" class="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded hidden">
+                            <strong>Limitations:</strong> <span id="limitationsText"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- RS Evidence -->
+                        <div class="border rounded p-4 shadow-sm bg-gray-50">
+                            <h4 class="text-md font-bold mb-3 flex items-center text-blue-800">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                Remote Sensing Evidence
+                            </h4>
+                            <div id="rsStats" class="text-sm space-y-2">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- VLM Evidence -->
+                        <div class="border rounded p-4 shadow-sm bg-purple-50">
+                            <h4 class="text-md font-bold mb-3 flex items-center text-purple-800">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                Gemini VLM Analysis
+                            </h4>
+                            <div id="vlmStats" class="text-sm space-y-2">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Execution Trace -->
+                    <div>
+                        <h4 class="text-lg font-bold border-b pb-2 mb-3">Agentic Workflow Trace</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200">
+                                <thead class="bg-gray-100 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-2 px-3 text-left text-xs font-semibold text-gray-600 uppercase">Step</th>
+                                        <th class="py-2 px-3 text-left text-xs font-semibold text-gray-600 uppercase">Tool</th>
+                                        <th class="py-2 px-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                        <th class="py-2 px-3 text-left text-xs font-semibold text-gray-600 uppercase">Time (ms)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="traceTableBody" class="divide-y divide-gray-200 text-sm">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const scenarios = {
+            'A': {
+                query: "Has vegetation decreased severely due to wildfire?",
+                t1: "datasets/golden_fixtures/raw/S2A_10TFK_20210708_0_L2A",
+                t2: "datasets/golden_fixtures/raw/S2B_10TFK_20211001_0_L2A"
+            },
+            'B': {
+                query: "Is the forest cover stable in this region?",
+                t1: "datasets/golden_fixtures/raw/S2B_10TDL_20210706_1_L2A",
+                t2: "datasets/golden_fixtures/raw/S2B_10TDL_20211014_1_L2A"
+            },
+            'C': {
+                query: "Has there been permanent deforestation here?",
+                t1: "datasets/golden_fixtures/raw/S2A_10SGF_20210705_2_L2A",
+                t2: "datasets/golden_fixtures/raw/S2A_10SGF_20211013_0_L2A"
+            }
+        };
+
+        let currentScenarioStr = "A";
+
+        function loadScenario(caseId) {
+            currentScenarioStr = caseId;
+            const data = scenarios[caseId];
+            document.getElementById('queryInput').value = data.query;
+            document.getElementById('t1Path').value = data.t1;
+            document.getElementById('t2Path').value = data.t2;
+        }
+
+        // Initialize with Case A
+        loadScenario('A');
+
+        async function runAnalysis() {
+            const btn = document.getElementById('analyzeBtn');
+            const query = document.getElementById('queryInput').value;
+            const t1 = document.getElementById('t1Path').value;
+            const t2 = document.getElementById('t2Path').value;
+            
+            // UI State updates
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsView').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('flex');
+
+            const payload = {
+                query: query,
+                observations: [
+                    {
+                        observation_id: "t1_img",
+                        image_path: t1,
+                        role: "t1",
+                        metadata: { modality: "optical", bands: ["red", "nir", "scl"] }
+                    },
+                    {
+                        observation_id: "t2_img",
+                        image_path: t2,
+                        role: "t2",
+                        metadata: { modality: "optical", bands: ["red", "nir", "scl"] }
+                    }
+                ],
+                metadata: {} 
+            };
+
+            try {
+                const response = await fetch('/api/v1/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                renderResults(data);
+            } catch (err) {
+                console.error(err);
+                alert("Failed to connect to API. Is the backend running?");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                document.getElementById('loadingState').classList.remove('flex');
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('resultsView').classList.remove('hidden');
+            
+            // Status Card
+            const statusCard = document.getElementById('statusCard');
+            const finalStatus = document.getElementById('finalStatus');
+            statusCard.className = 'p-4 rounded-lg border flex items-center justify-between mb-6 ';
+            
+            if (data.status === 'SUPPORTED') {
+                statusCard.classList.add('bg-green-50', 'border-green-200');
+                finalStatus.className = 'text-2xl font-black text-green-700';
+            } else if (data.status === 'UNCERTAIN') {
+                statusCard.classList.add('bg-yellow-50', 'border-yellow-200');
+                finalStatus.className = 'text-2xl font-black text-yellow-700';
+            } else {
+                statusCard.classList.add('bg-red-50', 'border-red-200');
+                finalStatus.className = 'text-2xl font-black text-red-700';
+            }
+            finalStatus.textContent = data.status || "ERROR";
+            document.getElementById('traceId').textContent = data.trace_id || "N/A";
+
+            // Answer
+            document.getElementById('finalAnswer').innerHTML = (data.answer || "No answer provided.").replace(/\n/g, '<br>');
+            
+            // Limitations
+            const limBox = document.getElementById('limitationsBox');
+            if (data.limitations && data.limitations.length > 0) {
+                limBox.classList.remove('hidden');
+                document.getElementById('limitationsText').textContent = data.limitations.join("; ");
+            } else {
+                limBox.classList.add('hidden');
+            }
+
+            // Evidence parsing
+            const rsDiv = document.getElementById('rsStats');
+            const vlmDiv = document.getElementById('vlmStats');
+            rsDiv.innerHTML = ''; vlmDiv.innerHTML = '';
+            let rsFound = false, vlmFound = false;
+
+            if (data.evidence && data.evidence.length > 0) {
+                data.evidence.forEach(ev => {
+                    const val = ev.value || {};
+                    if (ev.type === 'vegetation_change' || ev.type === 'change_quantification') {
+                        rsFound = true;
+                        let html = `<div class="mb-2 pb-2 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
+                            <span class="text-xs font-mono text-gray-500 block mb-1">ID: ${ev.evidence_id} (${ev.type})</span>`;
+                        
+                        if (val.mean_delta !== undefined) html += `<div class="flex justify-between"><span>Mean NDVI Delta:</span> <span class="font-bold text-gray-800">${val.mean_delta.toFixed(3)}</span></div>`;
+                        if (val.decrease_pixel_fraction !== undefined) html += `<div class="flex justify-between"><span>Decrease Fraction:</span> <span class="font-bold text-red-600">${(val.decrease_pixel_fraction * 100).toFixed(1)}%</span></div>`;
+                        if (val.mean_ndvi_t1 !== undefined) html += `<div class="flex justify-between"><span>Mean NDVI (T1):</span> <span class="font-medium">${val.mean_ndvi_t1.toFixed(3)}</span></div>`;
+                        if (val.mean_ndvi_t2 !== undefined) html += `<div class="flex justify-between"><span>Mean NDVI (T2):</span> <span class="font-medium">${val.mean_ndvi_t2.toFixed(3)}</span></div>`;
+                        if (val.threshold_used !== undefined) html += `<div class="flex justify-between"><span>Threshold Used:</span> <span class="font-mono text-xs text-gray-500">${val.threshold_used}</span></div>`;
+                        
+                        html += `</div>`;
+                        rsDiv.innerHTML += html;
+                    } else if (ev.type === 'vlm_interpretation') {
+                        vlmFound = true;
+                        let html = `
+                            <span class="text-xs font-mono text-gray-500 block mb-1">ID: ${ev.evidence_id} (Gemini VLM)</span>
+                            <div class="flex justify-between mb-1"><span>Extracted Claim:</span> <span class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-xs">${val.claim}</span></div>
+                            <div class="flex justify-between mb-2"><span>Confidence:</span> <span class="font-bold text-gray-800">${val.confidence}</span></div>
+                            <div class="bg-white p-2 rounded border text-gray-700 italic">"${val.reasoning || val.interpretation}"</div>
+                        `;
+                        vlmDiv.innerHTML += html;
+                    }
+                });
+            }
+
+            if (!rsFound) rsDiv.innerHTML = "<span class='text-gray-400 italic'>No RS evidence generated.</span>";
+            if (!vlmFound) vlmDiv.innerHTML = "<span class='text-gray-400 italic'>No VLM evidence generated.</span>";
+
+            // Trace
+            const tBody = document.getElementById('traceTableBody');
+            tBody.innerHTML = '';
+            if (data.execution_trace) {
+                data.execution_trace.forEach(step => {
+                    let statusColor = "text-gray-600";
+                    if (step.status === "success") statusColor = "text-green-600 font-bold";
+                    if (step.status === "error") statusColor = "text-red-600 font-bold";
+                    if (step.status === "skipped") statusColor = "text-gray-400";
+                    
+                    tBody.innerHTML += `
+                        <tr>
+                            <td class="py-2 px-3">${step.step}</td>
+                            <td class="py-2 px-3 font-mono text-xs">${step.tool}</td>
+                            <td class="py-2 px-3 ${statusColor} uppercase text-xs">${step.status}</td>
+                            <td class="py-2 px-3">${step.duration_ms}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

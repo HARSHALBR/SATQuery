@@ -1,0 +1,9 @@
+# Remote-sensing dependencies
+# Only install when working with actual RS tools / geospatial data
+rasterio>=1.3.0,<2.0.0
+GDAL>=3.6.0
+numpy>=1.26.0,<2.0.0
+geopandas>=0.14.0,<1.0.0
+shapely>=2.0.0,<3.0.0
+scipy>=1.12.0,<2.0.0
+scikit-image>=0.22.0,<1.0.0
