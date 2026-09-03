@@ -32,8 +32,8 @@ def analyze_query(query: QueryInput):
 
     # Check execution mode configuration
     # If a dev_scenario is explicitly specified, always use MockToolRunner for backward compatibility
-    has_dev_scenario = query.metadata and "dev_scenario" in query.metadata
-    mock_rs = os.getenv("MOCK_RS_TOOLS", "true").lower() == "true"
+    has_dev_scenario = bool(query.metadata and query.metadata.get("dev_scenario"))
+    mock_rs = os.getenv("MOCK_RS_TOOLS", "false").lower() == "true"
     if mock_rs or has_dev_scenario:
         runner = None
     else:

@@ -20,8 +20,82 @@ from tools.vlm.client import VLMClient, MockVLMClient
 from tools.vlm.image_utils import create_side_by_side
 from tools.vlm.prompt import build_vlm_prompt
 from schemas.vlm import VLMContext
+from tools.vlm.satellite_tensors import prepare_single_observation_tensors
+from tools.vlm.semantic_query import build_semantic_query
 import tempfile
 import os
+
+
+def _extract_change_regions(change_mask: np.ndarray, valid_mask: np.ndarray, raster_path: str, delta: np.ndarray, threshold: float) -> Dict[str, Any]:
+    """Extract connected regions from the existing deterministic change mask."""
+    import rasterio
+    from rasterio.features import shapes
+    from rasterio.warp import transform_geom, transform_bounds
+    from scipy import ndimage
+    from shapely.geometry import shape, mapping
+    from shapely.ops import unary_union
+
+    with rasterio.open(raster_path) as source:
+        transform = source.transform
+        source_crs = source.crs
+        bounds = source.bounds
+        width = source.width
+        height = source.height
+        resolution = source.res
+
+    if source_crs is None or not source_crs.is_valid:
+        source_bounds = None
+        geometry_crs = None
+    else:
+        source_bounds = transform_bounds(source_crs, "EPSG:4326", *bounds)
+        geometry_crs = str(source_crs)
+
+    labels, region_count = ndimage.label(change_mask.astype(bool), structure=np.ones((3, 3), dtype=np.uint8))
+    total_valid = int(np.count_nonzero(valid_mask))
+    pixel_area_m2 = None
+    if source_crs is not None and source_crs.is_valid and source_crs.is_projected:
+        determinant = abs(transform.a * transform.e - transform.b * transform.d)
+        unit_factor = source_crs.linear_units_factor[1] if source_crs.linear_units_factor else 1.0
+        pixel_area_m2 = determinant * (unit_factor ** 2)
+
+    regions = []
+    for region_index in range(1, region_count + 1):
+        component_mask = labels == region_index
+        changed_pixel_count = int(np.count_nonzero(component_mask))
+        if changed_pixel_count == 0:
+            continue
+        component_geometry = None
+        if source_crs is not None and source_crs.is_valid:
+            polygons = [shape(geometry) for geometry, value in shapes(component_mask.astype(np.uint8), mask=component_mask, transform=transform) if value == 1]
+            if polygons:
+                component_geometry = mapping(unary_union(polygons))
+                if str(source_crs) != "EPSG:4326":
+                    component_geometry = transform_geom(source_crs, "EPSG:4326", component_geometry, precision=7)
+
+        region_deltas = delta[component_mask]
+        region = {
+            "region_id": f"ndvi_change_{region_index:03d}",
+            "change_type": "decrease" if threshold < 0 else None,
+            "geometry": component_geometry,
+            "changed_pixel_count": changed_pixel_count,
+            "area_m2": changed_pixel_count * pixel_area_m2 if pixel_area_m2 is not None else None,
+            "area_ha": changed_pixel_count * pixel_area_m2 / 10000 if pixel_area_m2 is not None else None,
+            "change_percent": changed_pixel_count / total_valid * 100 if total_valid else None,
+            "metrics": {"ndvi_delta": float(np.nanmean(region_deltas)) if region_deltas.size else None},
+        }
+        regions.append(region)
+
+    spatial = {
+        "available": bool(regions),
+        "spatial_grounding": "change_regions_from_ndvi_mask",
+        "crs": "EPSG:4326" if source_bounds is not None else geometry_crs,
+        "bounds_wgs84": {"west": source_bounds[0], "south": source_bounds[1], "east": source_bounds[2], "north": source_bounds[3]} if source_bounds else None,
+        "center": {"lat": (source_bounds[1] + source_bounds[3]) / 2, "lon": (source_bounds[0] + source_bounds[2]) / 2} if source_bounds else None,
+        "observation_extent": {"source_crs": geometry_crs, "width": width, "height": height, "resolution": list(resolution), "transform": list(transform), "bounds_wgs84": {"west": source_bounds[0], "south": source_bounds[1], "east": source_bounds[2], "north": source_bounds[3]} if source_bounds else None},
+        "change_regions": regions,
+        "reason": None if regions else "No connected regions were present in the deterministic change mask.",
+    }
+    return spatial
 
 class RealToolRunner(ToolRunner):
     """
@@ -95,22 +169,88 @@ class RealToolRunner(ToolRunner):
         t2_obs = next(o for o in self.observations if o.role.value == "t2")
         input_ids = [t1_obs.metadata.stac_item_id or "t1", t2_obs.metadata.stac_item_id or "t2"]
         
+        t1_date = t1_obs.metadata.acquisition_date.isoformat() if t1_obs.metadata.acquisition_date else "Unknown"
+        t2_date = t2_obs.metadata.acquisition_date.isoformat() if t2_obs.metadata.acquisition_date else "Unknown"
+        
+        actual_query = parameters.get("query", self.query_text)
+        ctx = VLMContext(
+            query=actual_query,
+            t1_date=t1_date,
+            t2_date=t2_date
+        )
+        
+        if hasattr(self.vlm_client, "analyze_observation"):
+            semantic_query = build_semantic_query(actual_query)
+            
+            t1_s1, t1_s2 = prepare_single_observation_tensors(t1_obs.image_path)
+            t1_res = self.vlm_client.analyze_observation(
+                image_s1=t1_s1,
+                image_s2=t1_s2,
+                query=semantic_query,
+                context=ctx
+            )
+            
+            t2_s1, t2_s2 = prepare_single_observation_tensors(t2_obs.image_path)
+            t2_res = self.vlm_client.analyze_observation(
+                image_s1=t2_s1,
+                image_s2=t2_s2,
+                query=semantic_query,
+                context=ctx
+            )
+            
+            val = {
+                "semantic_query": semantic_query,
+                "t1": {
+                    "claim": t1_res.claim.value,
+                    "confidence": t1_res.confidence,
+                    "reasoning": t1_res.reasoning,
+                },
+                "t2": {
+                    "claim": t2_res.claim.value,
+                    "confidence": t2_res.confidence,
+                    "reasoning": t2_res.reasoning,
+                },
+            }
+            reasoning = f"T1: {t1_res.reasoning} | T2: {t2_res.reasoning}"
+            
+            tool_version = getattr(self.vlm_client, "model_name", "rs-internvl")
+            
+            ev = EvidenceRecord(
+                evidence_id=f"vlm_{uuid.uuid4().hex[:8]}",
+                type="vlm_interpretation",
+                tool_version=tool_version,
+                value=val,
+                quality=QualityReport(
+                    valid_pixel_fraction=None,
+                    registration_ok=None,
+                    cloud_cover=None,
+                    notes=["Quality metrics deferred to deterministic RS tools."]
+                ),
+                provenance=Provenance(
+                    tool="run_rs_vlm",
+                    tool_version="vlm-1.0",
+                    input_ids=input_ids
+                )
+            )
+            
+            return ToolResult(
+                tool="run_rs_vlm",
+                status=ToolStatus.SUCCESS,
+                output={
+                    "answer": reasoning,
+                    "claim": "semantic_observation",
+                    "region": None,
+                    "model_score": None,
+                    "model_version": "vlm-1.0",
+                    "evidence": ev
+                }
+            )
+        
         # Create temporal composite side-by-side (using red band as proxy for visual structure)
         tmp_dir = tempfile.mkdtemp()
         composite_path = os.path.join(tmp_dir, "vlm_composite.jpg")
         try:
             create_side_by_side(t1_paths["red"], t2_paths["red"], composite_path)
-            
-            # Prepare VLM context
-            t1_date = t1_obs.metadata.acquisition_date.isoformat() if t1_obs.metadata.acquisition_date else "Unknown"
-            t2_date = t2_obs.metadata.acquisition_date.isoformat() if t2_obs.metadata.acquisition_date else "Unknown"
-            
-            actual_query = parameters.get("query", self.query_text)
-            ctx = VLMContext(
-                query=actual_query,
-                t1_date=t1_date,
-                t2_date=t2_date
-            )
             
             vlm_res = self.vlm_client.analyze([composite_path], actual_query, ctx)
             
@@ -302,9 +442,11 @@ class RealToolRunner(ToolRunner):
             
             # Dispatch to math module
             stats = compute_change_statistics(delta, final_mask, threshold, change_type="decrease")
+            spatial_evidence = _extract_change_regions(stats["change_mask"], final_mask, self._get_paths_for_role("t1")["red"], delta, stats["threshold_used"])
             
             # Remove ndarray from stats to prevent JSON serialization errors
             stats.pop("change_mask", None)
+            stats["spatial_evidence"] = spatial_evidence
             
             ev = EvidenceRecord(
                 evidence_id=f"real_stats_{uuid.uuid4().hex[:8]}",
@@ -331,7 +473,7 @@ class RealToolRunner(ToolRunner):
                     "increase_pixel_fraction": stats["increase_pixel_fraction"],
                     "mean_delta": stats["mean_delta"],
                     "threshold_used": stats["threshold_used"],
-                    "change_mask": "mask_discarded",
+                    "change_mask": "retained_in_spatial_evidence",
                     "evidence": ev
                 }
             )

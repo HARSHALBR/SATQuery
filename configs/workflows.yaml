@@ -1,0 +1,129 @@
+workflows:
+  bi_temporal_change:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on: []
+    tool: grounding
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - validate_inputs
+    tool: change_statistics
+  - depends_on:
+    - run_rs_vlm
+    - change_statistics
+    tool: compare_evidence
+  - depends_on:
+    - compare_evidence
+    tool: generate_response
+  built_up_change:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on: []
+    tool: grounding
+  - depends_on:
+    - validate_inputs
+    tool: ndbi_delta
+  - depends_on:
+    - ndbi_delta
+    tool: change_statistics
+  - depends_on:
+    - ndbi_delta
+    - change_statistics
+    tool: compare_evidence
+  - depends_on:
+    - compare_evidence
+    tool: generate_response
+  captioning:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - run_rs_vlm
+    tool: generate_response
+  grounding:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - run_rs_vlm
+    tool: grounding
+  - depends_on:
+    - grounding
+    tool: generate_response
+  insufficient_capability:
+  - depends_on: []
+    tool: generate_response
+  optical_sar_cross_check:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on: []
+    tool: grounding
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - validate_inputs
+    tool: sar_change
+  - depends_on:
+    - sar_change
+    tool: change_statistics
+  - depends_on:
+    - run_rs_vlm
+    - change_statistics
+    - sar_change
+    tool: compare_evidence
+  - depends_on:
+    - compare_evidence
+    tool: generate_response
+  single_image_vqa:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - run_rs_vlm
+    tool: generate_response
+  spatial_measurement:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on:
+    - validate_inputs
+    tool: change_statistics
+  - depends_on:
+    - validate_inputs
+    tool: grounding
+  - depends_on:
+    - validate_inputs
+    tool: area_measurement
+  - depends_on:
+    - area_measurement
+    tool: generate_response
+  vegetation_change:
+  - depends_on: []
+    tool: validate_inputs
+  - depends_on: []
+    tool: grounding
+  - depends_on:
+    - validate_inputs
+    tool: ndvi_delta
+  - depends_on:
+    - ndvi_delta
+    tool: change_statistics
+  - depends_on:
+    - validate_inputs
+    tool: run_rs_vlm
+  - depends_on:
+    - ndvi_delta
+    - change_statistics
+    - run_rs_vlm
+    tool: compare_evidence
+  - depends_on:
+    - compare_evidence
+    tool: generate_response

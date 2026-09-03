@@ -12,8 +12,9 @@ Coordinates:
 """
 
 import logging
+from typing import List, Optional
 from schemas.query import QueryInput, Modality
-from schemas.response import FinalResponse, EvidenceStatus
+from schemas.response import FinalResponse, EvidenceStatus, SpatialEvidence, BoundsWGS84, GeoCenter, SpatialChangeRegion
 from schemas.workflow import WorkflowStatus
 from agents.task_classifier import TaskClassifier
 from agents.planner import ConstrainedPlanner
@@ -72,6 +73,56 @@ class SATQueryOrchestrator:
             valid_pixel_fraction=meta.get("valid_pixel_fraction", 0.9),
         )
 
+    def _build_spatial_evidence(self, evidence_list: list) -> Optional[SpatialEvidence]:
+        """Extract spatial bounds from spatial_grounding evidence record.
+        
+        The grounding tool returns a bounding_box in WGS84 [west, south, east, north].
+        We promote this into the top-level spatial_evidence response field so the
+        frontend can zoom the Leaflet map to the actual observation extent.
+        """
+        for ev in evidence_list:
+            if ev.type == "change_quantification" and ev.value:
+                spatial = ev.value.get("spatial_evidence")
+                if spatial:
+                    try:
+                        return SpatialEvidence(
+                            available=bool(spatial.get("available")),
+                            spatial_grounding=spatial.get("spatial_grounding"),
+                            crs=spatial.get("crs"),
+                            bounds_wgs84=BoundsWGS84(**spatial["bounds_wgs84"]) if spatial.get("bounds_wgs84") else None,
+                            center=GeoCenter(**spatial["center"]) if spatial.get("center") else None,
+                            observation_extent=spatial.get("observation_extent"),
+                            change_regions=[SpatialChangeRegion(**region) for region in spatial.get("change_regions", [])],
+                            reason=spatial.get("reason"),
+                        )
+                    except (TypeError, ValueError, KeyError):
+                        logger.warning("Invalid spatial evidence returned by change statistics")
+            if ev.type == "spatial_grounding" and ev.value:
+                bb = ev.value.get("bounding_box")
+                if bb and len(bb) == 4:
+                    west, south, east, north = bb
+                    try:
+                        return SpatialEvidence(
+                            available=True,
+                            crs="EPSG:4326",
+                            bounds_wgs84=BoundsWGS84(
+                                west=float(west),
+                                south=float(south),
+                                east=float(east),
+                                north=float(north),
+                            ),
+                            center=GeoCenter(
+                                lat=float((south + north) / 2),
+                                lon=float((west + east) / 2),
+                            ),
+                        )
+                    except (TypeError, ValueError):
+                        pass
+        return SpatialEvidence(
+            available=False,
+            reason="Spatial bounds could not be derived from the input.",
+        )
+
     def analyze(self, query: QueryInput) -> FinalResponse:
         """Execute the full end-to-end analysis pipeline."""
         # 1. Context Preparation
@@ -94,6 +145,7 @@ class SATQueryOrchestrator:
                 limitations=[plan.fallback or "Missing required capabilities."],
                 execution_trace=[],
                 model_versions=self.model_versions,
+                spatial_evidence=SpatialEvidence(available=False, reason="Analysis could not proceed."),
             )
 
         try:
@@ -109,6 +161,7 @@ class SATQueryOrchestrator:
 
             # Handle execution failure
             if plan.status == WorkflowStatus.FAILED:
+                spatial_ev = self._build_spatial_evidence(self.evidence_store.list())
                 return FinalResponse(
                     trace_id=trace.trace_id,
                     task=getattr(parsed.task, "value", str(parsed.task)),
@@ -118,6 +171,7 @@ class SATQueryOrchestrator:
                     limitations=["Workflow execution encountered an error."],
                     execution_trace=trace.steps,
                     model_versions=self.model_versions,
+                    spatial_evidence=spatial_ev,
                 )
 
             # 7. Comparison
@@ -141,7 +195,10 @@ class SATQueryOrchestrator:
                 
             answer = "\n".join(lines)
 
-            # 9. Return Response
+            # 9. Build spatial evidence from grounding output
+            spatial_ev = self._build_spatial_evidence(self.evidence_store.list())
+
+            # 10. Return Response
             return FinalResponse(
                 trace_id=trace.trace_id,
                 task=getattr(parsed.task, "value", str(parsed.task)),
@@ -151,6 +208,7 @@ class SATQueryOrchestrator:
                 limitations=comp_result.limitations,
                 execution_trace=trace.steps,
                 model_versions=self.model_versions,
+                spatial_evidence=spatial_ev,
             )
         finally:
             if hasattr(self.runner, "cleanup"):
