@@ -697,19 +697,6 @@
                             </div>
                         </div>
 
-                        <!-- Detected Regions Panel (Adjacent to Map) -->
-                        <div class="dark-glass-card p-4 border border-slate-700/50 shadow-md">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-blue-400 font-bold text-xs">📍</span>
-                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-200">Detected Change Regions</h4>
-                                </div>
-                                <span class="text-[10px] text-slate-400">Click to highlight on map</span>
-                            </div>
-                            <div id="spatialRegionList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
-                                <p class="text-xs italic text-slate-500 py-2">Detected regions will appear after execution.</p>
-                            </div>
-                        </div>
 
                         <!-- Before / After Satellite Comparison in Analysis Tab -->
                         <div class="dark-glass-card p-4 border border-slate-700/50 shadow-md">
@@ -1856,7 +1843,10 @@
             const format = value => typeof value === 'number' ? value.toFixed(3) : 'Not available';
             document.getElementById('spatialGraph').innerHTML = metrics.length ? metrics.map(([name, before, after, delta]) => `<div class="rounded-lg border border-slate-700/50 bg-slate-900/50 p-3 text-xs"><div class="flex justify-between font-bold text-slate-200"><span>${name}</span><span>Delta ${format(delta)}</span></div><div class="mt-2 flex justify-between text-slate-400"><span>Before: ${format(before)}</span><span>After: ${format(after)}</span></div></div>`).join('') : '<p class="text-xs italic text-slate-500">No aggregate quantitative metrics were returned.</p>';
             spatialRegions = Array.isArray(data.spatial_evidence?.change_regions) ? data.spatial_evidence.change_regions : [];
-            document.getElementById('spatialRegionList').innerHTML = spatialRegions.length ? spatialRegions.map(region => `<button type="button" class="block w-full rounded-lg border border-slate-700/50 bg-slate-900/50 p-2 text-left text-xs text-slate-300 transition hover:border-blue-400" onclick="selectSpatialRegion('${escapePlannerText(region.region_id)}')"><span class="font-bold">${escapePlannerText(safeValue(region.region_id))}</span><span class="float-right">${format(region.metrics?.ndvi_delta)}</span><span class="block text-slate-500">${escapePlannerText(safeValue(region.change_type))} · ${format(region.area_ha)} ha</span></button>`).join('') : '<p class="text-xs italic text-slate-500">No detected change regions.</p>';
+            const regionListEl = document.getElementById('spatialRegionList');
+            if (regionListEl) {
+                regionListEl.innerHTML = spatialRegions.length ? spatialRegions.map(region => `<button type="button" class="block w-full rounded-lg border border-slate-700/50 bg-slate-900/50 p-2 text-left text-xs text-slate-300 transition hover:border-blue-400" onclick="selectSpatialRegion('${escapePlannerText(region.region_id)}')"><span class="font-bold">${escapePlannerText(safeValue(region.region_id))}</span><span class="float-right">${format(region.metrics?.ndvi_delta)}</span><span class="block text-slate-500">${escapePlannerText(safeValue(region.change_type))} · ${format(region.area_ha)} ha</span></button>`).join('') : '<p class="text-xs italic text-slate-500">No detected change regions.</p>';
+            }
             const explanations = [];
             if (veg && typeof veg.ndvi_delta === 'number') explanations.push(`Quantitative evidence: NDVI changed by ${format(veg.ndvi_delta)}.`);
             if (built && typeof built.ndbi_delta === 'number') explanations.push(`Built-up evidence: NDBI changed by ${format(built.ndbi_delta)}.`);
