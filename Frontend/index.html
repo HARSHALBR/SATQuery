@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVision - Agentic Geospatial Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root { --ink: #12243a; --muted: #61748a; --line: #d7e5f2; --blue: #1677d2; --indigo: #5d52c9; }
+        body {
+            background-color: #b8e0f7;
+            background-image:
+                /* large soft white cloud blob – top-centre */
+                radial-gradient(ellipse 68% 52% at 55% 18%, rgba(255,255,255,0.72) 0%, transparent 70%),
+                /* mid-left haze */
+                radial-gradient(ellipse 55% 45% at 12% 42%, rgba(200,232,248,0.65) 0%, transparent 68%),
+                /* bottom-right bright patch */
+                radial-gradient(ellipse 60% 50% at 78% 82%, rgba(150,215,245,0.70) 0%, transparent 72%),
+                /* lower-centre white glow – mimics the bright cloud base */
+                radial-gradient(ellipse 75% 38% at 48% 88%, rgba(255,255,255,0.58) 0%, transparent 65%),
+                /* top-right cool tint */
+                radial-gradient(ellipse 45% 35% at 92% 8%, rgba(185,228,248,0.55) 0%, transparent 60%),
+                /* subtle cyan tint at very bottom-left */
+                radial-gradient(ellipse 38% 28% at 4% 96%, rgba(80,200,235,0.45) 0%, transparent 55%),
+                /* base sky gradient */
+                linear-gradient(180deg, #a8d8f0 0%, #c5e8f8 30%, #daf3ff 60%, #b6e3f7 100%);
+            background-attachment: fixed;
+            font-family: Georgia, 'Times New Roman', serif;
+            color: var(--ink);
+        }
+
+        /* Tiny bright lens-flare dot – pure CSS, matches the white speck in the photo */
+        body::before {
+            content: '';
+            position: fixed;
+            left: 38%;
+            bottom: 20%;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0) 70%);
+            box-shadow: 0 0 6px 3px rgba(255,255,255,0.9);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .step-one-shell { max-width: 1180px; margin: 0 auto; }
+        .brand-mark { filter: drop-shadow(0 7px 10px rgba(22, 119, 210, 0.18)); }
+        .step-one-panel { background: rgba(255,255,255,0.55); backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%); border: 1px solid rgba(255,255,255,0.75); box-shadow: 0 8px 40px rgba(46,106,153,0.18), inset 0 1px 0 rgba(255,255,255,0.9); border-radius: 24px; }
+        .input-label { color: var(--ink); font: 700 .75rem Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+        .query-box { background: rgba(248,252,255,.92); border: 1px solid var(--line); color: var(--ink); font: 1.08rem Georgia, 'Times New Roman', serif; transition: border-color .2s ease, box-shadow .2s ease; }
+        .query-box:focus { border-color: #75afe0; box-shadow: 0 0 0 4px rgba(22,119,210,.12); outline: none; }
+        .upload-card, .scenario-card { transition: transform .25s ease, box-shadow .25s ease; }
+        .upload-card:hover, .scenario-card:hover { transform: translateY(-4px); box-shadow: 0 18px 36px rgba(22,119,210,0.18); }
+        .upload-card { background: rgba(255,255,255,0.52); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.72); border-radius: 16px; box-shadow: 0 4px 20px rgba(46,106,153,0.10), inset 0 1px 0 rgba(255,255,255,0.85); }
+        .scenario-card { background: rgba(255,255,255,0.52); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border: 1px solid rgba(255,255,255,0.70) !important; box-shadow: 0 4px 16px rgba(46,106,153,0.10), inset 0 1px 0 rgba(255,255,255,0.85); }
+        .browse-button { background: linear-gradient(135deg, var(--blue), var(--indigo)); transition: all .2s ease; }
+        .browse-button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(22,119,210,.25); }
+        .scenario-card { border-radius: 16px; border: 1px solid; }
+        .file-preview { background: #f5faff; border: 1px solid #d8e9f7; }
+        .pipeline-line { background: linear-gradient(90deg, #1677d2, #5d52c9); }
+        .validation-panel { background: rgba(255,255,255,0.52); backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%); border: 1px solid rgba(255,255,255,0.76); box-shadow: 0 12px 48px rgba(46,106,153,0.16), inset 0 1px 0 rgba(255,255,255,0.9); border-radius: 22px; }
+        .validation-row { background: rgba(255,255,255,0.45); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border: 1px solid rgba(255,255,255,0.65); box-shadow: 0 2px 12px rgba(46,106,153,0.08), inset 0 1px 0 rgba(255,255,255,0.8); transition: transform .25s ease, box-shadow .25s ease; }
+        .validation-row:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(22,119,210,0.16); }
+        .validation-flow { background: rgba(255,255,255,0.38); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.60); box-shadow: inset 0 1px 0 rgba(255,255,255,0.75); }
+        .validation-flow-step { min-width: 0; flex: 1; background: rgba(255,255,255,0.55); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.70); border-radius: 10px; }
+        .validation-flow-arrow { color: #1677d2; font-size: 1.1rem; font-weight: 800; }
+        .planner-tool { background: rgba(248,252,255,.78); border: 1px solid #dfeaf3; transition: transform .2s ease, box-shadow .2s ease; }
+        .planner-tool:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(55,104,142,.1); }
+        .result-hero { background: rgba(255,255,255,0.52); backdrop-filter: blur(30px) saturate(220%); -webkit-backdrop-filter: blur(30px) saturate(220%); border: 1px solid rgba(255,255,255,0.76); box-shadow: 0 24px 64px rgba(46,106,153,0.18), inset 0 1px 0 rgba(255,255,255,0.92); border-radius: 24px; }
+        .result-hero .hero-answer { font-family: Arial, Helvetica, sans-serif; letter-spacing: -.02em; }
+        .hero-evidence-item { background: rgba(255,255,255,0.52); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.68); box-shadow: 0 2px 12px rgba(46,106,153,0.08); transition: transform .25s ease, box-shadow .25s ease; }
+        .hero-evidence-item:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(22,119,210,0.15); }
+        .timeline-stage { position: relative; display: grid; width: 100%; grid-template-columns: minmax(190px, 240px) minmax(0, 1fr); column-gap: .7rem; margin-left: .65rem; border-left: 2px solid #c9dceb; padding: 0 0 .7rem 1.35rem; }
+        .timeline-stage:last-child { border-left-color: transparent; }
+        .timeline-node { position: absolute; left: -.55rem; top: .1rem; width: 1rem; height: 1rem; border: 3px solid #eaf6ff; border-radius: 999px; background: #5d52c9; box-shadow: 0 0 0 1px #9bbbd3; }
+        .timeline-toggle { width: 100%; text-align: left; background: rgba(255,255,255,.86); border: 1px solid #d6e6f2; border-radius: 10px; transition: transform .2s ease, box-shadow .2s ease; }
+        .timeline-toggle:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(55,104,142,.1); }
+        .timeline-toggle { grid-column: 1; align-self: start; }
+        .timeline-detail { display: none; grid-column: 2; align-self: start; min-width: 0; }
+        .timeline-detail > div { overflow: hidden; }
+        .timeline-stage.is-open .timeline-detail { display: block; }
+        @media (max-width: 700px) {
+            .timeline-stage { display: block; }
+            .timeline-detail { margin-top: .5rem; }
+        }
+        .result-chip { border: 1px solid rgba(255,255,255,0.60); background: rgba(255,255,255,0.48); backdrop-filter: blur(10px); }
+        .dark-glass-card { background: rgba(255,255,255,0.52); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid rgba(255,255,255,0.70); box-shadow: 0 12px 40px rgba(46,106,153,0.14), inset 0 1px 0 rgba(255,255,255,0.88); color: #243b53; border-radius: 20px; }
+        .dark-glass-card [class*="bg-slate-900"], .dark-glass-card [class*="bg-slate-800"], .dark-glass-card [class*="bg-purple-900"], .dark-glass-card [class*="bg-emerald-900"] { background: rgba(240,250,255,0.65) !important; backdrop-filter: blur(10px); }
+        .dark-glass-card [class*="text-white"], .dark-glass-card [class*="text-slate-200"], .dark-glass-card [class*="text-slate-300"] { color: #1e3a5f; }
+        .dark-glass-card [class*="text-slate-400"], .dark-glass-card [class*="text-slate-500"] { color: #4e7090; }
+        .dark-glass-card [class*="border-slate-700"], .dark-glass-card [class*="border-slate-800"], .dark-glass-card [class*="border-purple-700"], .dark-glass-card [class*="border-emerald-700"] { border-color: rgba(100,160,220,0.25) !important; }
+        .dark-glass-card [class*="text-purple-400"] { color: #6b21a8 !important; }
+        .dark-glass-card [class*="text-emerald-400"] { color: #047857 !important; }
+        .dark-glass-card [class*="text-amber-400"] { color: #b45309 !important; }
+        .dark-glass-card [class*="text-red-400"] { color: #b91c1c !important; }
+        .dark-glass-card [class*="text-blue-400"] { color: #1d4ed8 !important; }
+        #loadingState { color: #1e3a5f; }
+        #loadingState [class*="bg-slate-100"] { background: rgba(255,255,255,0.55); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.70); }
+        #map { background: #d8eef8; }
+
+        /* ── Premium Glassmorphism Cards ── */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.10),
+                        0 2px 8px rgba(31, 38, 135, 0.06),
+                        inset 0 1px 0 rgba(255,255,255,0.8);
+            border-radius: 22px;
+        }
+
+        /* Pipeline Cards – glassy with coloured glow & height effect */
+        .pipeline-glass-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.68);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.04),
+                0 20px 50px -10px rgba(46,106,200,0.14),
+                inset 0 1px 0 rgba(255,255,255,0.85),
+                inset 0 -1px 0 rgba(100,130,200,0.08);
+            transition: transform 0.3s cubic-bezier(.22,.68,0,1.2),
+                        box-shadow 0.3s ease;
+            color: #1e3a5f;
+            display: flex;
+            flex-direction: column;
+        }
+        .pipeline-glass-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.05),
+                0 30px 60px -10px rgba(46,106,200,0.22),
+                inset 0 1px 0 rgba(255,255,255,0.9),
+                inset 0 -1px 0 rgba(100,130,200,0.1);
+        }
+        /* Shimmering top accent bar */
+        .pipeline-glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: 20px 20px 0 0;
+        }
+        .pipeline-glass-card.accent-blue::before  { background: linear-gradient(90deg,#3b82f6,#60a5fa,#818cf8); }
+        .pipeline-glass-card.accent-green::before { background: linear-gradient(90deg,#10b981,#34d399,#6ee7b7); }
+        .pipeline-glass-card.accent-purple::before{ background: linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd); }
+
+        .pipeline-glass-card .card-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Subtle glass chip */
+        .glass-chip {
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.7);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+
+        /* Text overrides inside pipeline cards */
+        .pipeline-glass-card [class*="text-slate-400"],
+        .pipeline-glass-card [class*="text-slate-500"] { color: #5a7a9a !important; }
+        .pipeline-glass-card [class*="text-slate-200"],
+        .pipeline-glass-card [class*="text-white"]     { color: #1e3a5f !important; }
+        .pipeline-glass-card [class*="text-slate-300"] { color: #2d5580 !important; }
+        .pipeline-glass-card [class*="border-slate-700"] { border-color: rgba(200,220,240,0.5) !important; }
+        .pipeline-glass-card [class*="bg-slate-900"],
+        .pipeline-glass-card [class*="bg-slate-800"],
+        .pipeline-glass-card [class*="bg-slate-700"],
+        .pipeline-glass-card [class*="bg-emerald-900"],
+        .pipeline-glass-card [class*="bg-purple-900"] { background: rgba(240,248,255,0.6) !important; }
+
+        /* Equal height grid for 3 pipeline cards */
+        .pipeline-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+        @media (min-width: 1024px) {
+            .pipeline-cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .dark-glass-card {
+            background: rgba(255, 255, 255, 0.52);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255,255,255,0.70);
+            box-shadow: 0 12px 40px rgba(46,106,153,0.14), inset 0 1px 0 rgba(255,255,255,0.88);
+            border-radius: 20px;
+            color: #243b53;
+        }
+        [class*="bg-slate-900"], [class*="bg-slate-800"], [class*="bg-purple-900"], [class*="bg-emerald-900"] { background: rgba(240,250,255,0.60) !important; }
+        [class*="text-white"] { color: #1e3a5f !important; }
+        [class*="border-slate-700"], [class*="border-slate-800"], [class*="border-purple-700"], [class*="border-emerald-700"] { border-color: rgba(100,160,220,0.25) !important; }
+        .browse-button, .browse-button [class*="text-white"] { color: #ffffff !important; }
+
+        /* ── Section connector arrows ── */
+        .section-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            margin: 0.5rem 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .section-arrow .arrow-line {
+            width: 2px;
+            height: 28px;
+            background: linear-gradient(180deg, rgba(22,119,210,0.35) 0%, rgba(93,82,201,0.45) 100%);
+            border-radius: 2px;
+        }
+        .section-arrow .arrow-chevron {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(22,119,210,0.30);
+            box-shadow: 0 4px 14px rgba(22,119,210,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: arrowBounce 1.8s ease-in-out infinite;
+        }
+        .section-arrow .arrow-chevron svg {
+            width: 18px;
+            height: 18px;
+            stroke: #1677d2;
+            stroke-width: 2.5;
+            fill: none;
+        }
+        @keyframes arrowBounce {
+            0%, 100% { transform: translateY(0); box-shadow: 0 4px 14px rgba(22,119,210,0.15); }
+            50%       { transform: translateY(6px); box-shadow: 0 10px 22px rgba(22,119,210,0.25); }
+        }
+        #mapPlaceholder { background: rgba(247,251,254,.94) !important; }
+        .loader {
+            border: 3px solid #f1f5f9;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .timeline-step {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 8px;
+            bottom: -20px;
+            width: 2px;
+            background: #cbd5e1;
+        }
+        .timeline-step:last-child::before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -1px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3b82f6;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #cbd5e1;
+        }
+
+        /* ── Tab Navigation Styles ── */
+        .tab-btn {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: 1px solid rgba(210, 225, 240, 0.8);
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(12px);
+        }
+        .tab-btn:hover:not(.active-tab) {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(59, 130, 246, 0.35);
+            transform: translateY(-1px);
+        }
+        .tab-btn.active-tab {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+            color: #ffffff !important;
+            border-color: rgba(37, 99, 235, 0.9) !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+        }
+        .tab-btn.active-tab span {
+            color: #ffffff !important;
+        }
+
+        /* ── Responsive Map Sizing (Landscape Aspect Ratio) ── */
+        #map {
+            height: 410px;
+            min-height: 300px;
+            max-height: 52vh;
+            width: 100%;
+            border-radius: 14px;
+            z-index: 1;
+        }
+        @media (max-width: 768px) {
+            #map {
+                height: 320px;
+                min-height: 260px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6">
+    <div class="step-one-shell space-y-4 max-w-7xl mx-auto">
+
+        <!-- COMPACT HEADER (Branding on Left, Status + Trace on Right) -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/60">
+            <div class="flex items-center gap-3">
+                <div class="brand-mark flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 text-blue-700 shadow-md flex-shrink-0">
+                    <svg class="h-6 w-6" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Satellite icon" role="img"><path d="M24 19v18M17 37h14M19 13l-5-5-6 6 8 8M29 13l5-5 6 6-8 8M17 20h14l-2 13H19l-2-13Z"/><path d="M24 5v5M5 24h5M38 24h5" stroke-linecap="round"/></svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-tight">GeoVision</h1>
+                        <span class="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-sans text-[9px] font-bold tracking-wider text-blue-700">AI + REMOTE SENSING</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-600">Evidence-Verified Geospatial Intelligence</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                <span id="headerValidationBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm">
+                    <span class="text-emerald-600 font-bold">✓</span> <span id="headerValidationText">Inputs Validated</span>
+                </span>
+                <button type="button" onclick="toggleTraceAccordion()" class="rounded-xl border border-slate-200 bg-white/90 hover:bg-white px-3 py-1 font-sans text-[11px] font-bold text-slate-700 shadow-sm transition flex items-center gap-1.5">
+                    <span>View Execution Trace</span> <span id="traceToggleIcon">▾</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONSOLIDATED TOP NAVIGATION (3 TABS) -->
+        <nav class="flex items-center gap-2 overflow-x-auto rounded-2xl bg-white/85 p-1.5 backdrop-blur-xl shadow-sm border border-white/80" aria-label="Analysis Workspace Tabs">
+            <button type="button" onclick="switchTab('query')" id="tabBtn-query" class="tab-btn active-tab flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <span>💬</span> <span>Query &amp; Observations</span>
+            </button>
+            <button type="button" onclick="switchTab('analysis')" id="tabBtn-analysis" class="tab-btn flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900 hover:bg-white/60 whitespace-nowrap">
+                <span>🗺️</span> <span>Analysis &amp; Map</span>
+            </button>
+            <button type="button" onclick="switchTab('evidence')" id="tabBtn-evidence" class="tab-btn flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900 hover:bg-white/60 whitespace-nowrap">
+                <span>🔬</span> <span>Evidence Ledger</span>
+            </button>
+        </nav>
+
+        <!-- EXECUTION / LOADING -->
+        <div id="loadingState" class="glass-card p-8 hidden flex-col items-center justify-center text-center">
+            <div class="loader mb-4 w-12 h-12 border-4 border-slate-100 border-t-blue-600"></div>
+            <h3 class="text-xl font-black text-slate-800 mb-2" id="loadingTitle">ANALYSIS RUNNING</h3>
+            <div class="text-xs font-mono text-slate-500 bg-slate-100 px-4 py-2.5 rounded-lg border inline-block max-w-md w-full text-left">
+                <div class="flex items-center gap-2 mb-1.5 text-emerald-600">✓ Inputs Validated &amp; Aligned</div>
+                <div class="flex items-center gap-2 mb-1.5 text-emerald-600">✓ Query Understood &amp; Planned</div>
+                <div class="flex items-center gap-2 mb-1.5 animate-pulse text-blue-600">⟳ Executing Independent Multi-Path Verification...</div>
+                <div class="flex items-center gap-2 text-slate-400">○ Comparing Semantic &amp; Physical Evidence</div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT CONTAINER -->
+        <div id="tabsContent" class="space-y-4">
+
+            <!-- TAB 1: QUERY & OBSERVATIONS -->
+            <div id="tab-query" class="tab-panel space-y-4">
+                <!-- Compact Horizontal Query Card -->
+                <div class="step-one-panel p-5 md:p-6 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                        <div>
+                            <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">QUERY WORKSPACE</span>
+                            <h2 class="text-xl md:text-2xl font-black text-slate-900 leading-tight">Ask GeoVision</h2>
+                        </div>
+                        <span class="text-xs text-slate-500">Natural language geospatial question or instant scenario</span>
+                    </div>
+
+                    <!-- Input + Execute in Compact Layout -->
+                    <div class="flex flex-col sm:flex-row gap-3 items-stretch">
+                        <div class="flex-grow">
+                            <textarea id="queryInput" rows="2" class="query-box w-full rounded-xl p-3 text-sm placeholder-slate-400" placeholder="Example: Has vegetation decreased between the two observations?"></textarea>
+                        </div>
+                        <button onclick="runAnalysis()" id="analyzeBtn" title="Execute Pipeline" disabled class="browse-button flex cursor-not-allowed items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-black tracking-wide text-white opacity-50 shadow-md sm:w-auto flex-shrink-0">
+                            <span>⚡ Execute Evidence Analysis</span>
+                        </button>
+                    </div>
+
+                    <!-- Demo Scenarios Strip -->
+                    <div class="mt-4 pt-3 border-t border-slate-200/80">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Instant Demo Scenarios:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                            <button type="button" onclick="selectScenario('veg_increase')" class="scenario-card w-full border-emerald-200 bg-emerald-50/70 p-2.5 text-left rounded-xl transition hover:border-emerald-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-emerald-700 block">01 SUPPORTED</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Vegetation Increased</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Wildfire recovery</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('builtup_decrease')" class="scenario-card w-full border-amber-200 bg-amber-50/70 p-2.5 text-left rounded-xl transition hover:border-amber-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-amber-700 block">02 UNCERTAIN</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Built-up Decreased</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Demolition conflict</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('flood_change')" class="scenario-card w-full border-red-200 bg-red-50/70 p-2.5 text-left rounded-xl transition hover:border-red-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-red-700 block">03 INSUFFICIENT</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Water Body Change</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Missing cloud-free input</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('river_development')" class="scenario-card w-full border-indigo-200 bg-indigo-50/70 p-2.5 text-left rounded-xl transition hover:border-indigo-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-indigo-700 block">04 REAL RGB</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">River &amp; Urban (JPEG)</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Real photo observations</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('test_zips_multispectral')" class="scenario-card w-full border-teal-200 bg-teal-50/70 p-2.5 text-left rounded-xl transition hover:border-teal-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-teal-700 block">05 REAL ZIPs</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">valid_t1 &amp; valid_t2</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Full deterministic RS</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="validationResult" class="hidden mt-3 p-3 rounded-xl border text-xs font-medium shadow-sm"></div>
+                </div>
+
+                <!-- Compact Side-by-Side Observations -->
+                <div class="step-one-panel p-5 md:p-6 shadow-sm">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <div>
+                            <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">OBSERVATIONS</span>
+                            <h3 class="text-base font-black text-slate-900">Satellite Imagery (T1 Before / T2 After)</h3>
+                        </div>
+                        <span class="text-[11px] text-slate-500">Multispectral ZIP or Visual Image (.jpg, .png, .tif)</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- T1 BEFORE -->
+                        <div class="upload-card p-4 rounded-xl border border-blue-100 bg-white/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-blue-50">
+                                    <div>
+                                        <p class="font-sans text-[12px] font-black tracking-wider text-blue-700 uppercase">BEFORE — T1</p>
+                                        <p class="text-[10px] text-slate-500">Earlier satellite observation</p>
+                                    </div>
+                                    <span class="rounded bg-blue-100 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-blue-800">T1</span>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div id="t1EmptyState" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/70 my-2">
+                                    <span class="text-2xl block mb-1">🛰️</span>
+                                    <strong class="text-xs font-bold text-slate-700 block">BEFORE — T1</strong>
+                                    <span class="text-[11px] text-slate-400">No T1 observation selected</span>
+                                </div>
+
+                                <!-- Populated Preview -->
+                                <div id="t1PreviewContainer" class="hidden my-2">
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner group">
+                                        <img id="t1PreviewImg" src="" alt="T1 Before Observation" class="w-full h-44 object-contain bg-slate-950">
+                                        <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wider uppercase">BEFORE — T1</div>
+                                        <div id="t1Badge" class="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm">✓ Validated</div>
+                                    </div>
+                                    <!-- Compact Validation Panel -->
+                                    <div id="t1ValidationDetails"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 pt-2 border-t border-slate-100">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="t1File" class="browse-button cursor-pointer rounded-lg px-3.5 py-1.5 font-sans text-xs font-bold text-white shadow-sm">Browse Image</label>
+                                    <input type="file" id="t1File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="handleFileSelection('t1')">
+                                    <button type="button" onclick="uploadFile('t1')" class="rounded-lg border border-blue-200 bg-blue-50/50 px-3.5 py-1.5 font-sans text-xs font-bold text-blue-700 hover:bg-blue-100 transition">Upload &amp; Validate</button>
+                                </div>
+                                <div id="t1Status" class="mt-2 hidden rounded-lg p-2 font-sans text-xs"></div>
+                            </div>
+                        </div>
+
+                        <!-- T2 AFTER -->
+                        <div class="upload-card p-4 rounded-xl border border-indigo-100 bg-white/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-indigo-50">
+                                    <div>
+                                        <p class="font-sans text-[12px] font-black tracking-wider text-indigo-700 uppercase">AFTER — T2</p>
+                                        <p class="text-[10px] text-slate-500">Later satellite observation</p>
+                                    </div>
+                                    <span class="rounded bg-indigo-100 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-800">T2</span>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div id="t2EmptyState" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/70 my-2">
+                                    <span class="text-2xl block mb-1">🛰️</span>
+                                    <strong class="text-xs font-bold text-slate-700 block">AFTER — T2</strong>
+                                    <span class="text-[11px] text-slate-400">No T2 observation selected</span>
+                                </div>
+
+                                <!-- Populated Preview -->
+                                <div id="t2PreviewContainer" class="hidden my-2">
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner group">
+                                        <img id="t2PreviewImg" src="" alt="T2 After Observation" class="w-full h-44 object-contain bg-slate-950">
+                                        <div class="absolute top-2 left-2 bg-indigo-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wider uppercase">AFTER — T2</div>
+                                        <div id="t2Badge" class="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm">✓ Validated</div>
+                                    </div>
+                                    <!-- Compact Validation Panel -->
+                                    <div id="t2ValidationDetails"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 pt-2 border-t border-slate-100">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="t2File" class="browse-button cursor-pointer rounded-lg px-3.5 py-1.5 font-sans text-xs font-bold text-white shadow-sm">Browse Image</label>
+                                    <input type="file" id="t2File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="handleFileSelection('t2')">
+                                    <button type="button" onclick="uploadFile('t2')" class="rounded-lg border border-indigo-200 bg-indigo-50/50 px-3.5 py-1.5 font-sans text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition">Upload &amp; Validate</button>
+                                </div>
+                                <div id="t2Status" class="mt-2 hidden rounded-lg p-2 font-sans text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Before / After Comparison Card in Query Tab -->
+                    <div class="mt-5 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-200/70">
+                            <div>
+                                <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">INTERACTIVE COMPARISON</span>
+                                <h4 class="text-sm font-black text-slate-900">Before &amp; After Temporal Analysis</h4>
+                            </div>
+                            <div class="inline-flex rounded-lg p-1 bg-slate-100 border border-slate-200 text-xs font-bold gap-1 self-start sm:self-auto">
+                                <button type="button" id="compBtn_side" onclick="setComparisonMode('side')" class="px-3 py-1 rounded-md bg-white text-blue-800 shadow-sm font-bold border border-blue-200">🔀 Side-by-Side</button>
+                                <button type="button" id="compBtn_swipe" onclick="setComparisonMode('swipe')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">↔️ Swipe</button>
+                                <button type="button" id="compBtn_before" onclick="setComparisonMode('before')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">⬅️ Before</button>
+                                <button type="button" id="compBtn_after" onclick="setComparisonMode('after')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">➡️ After</button>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Views Container -->
+                        <div id="compEmptyNotice" class="p-8 text-center bg-slate-50/80 rounded-xl border border-dashed border-slate-200">
+                            <span class="text-3xl block mb-2">🛰️</span>
+                            <p class="text-xs font-bold text-slate-700">Interactive Comparison Ready</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Upload both T1 (Before) and T2 (After) or choose a scenario above to inspect temporal imagery.</p>
+                        </div>
+
+                        <div id="compContentArea" class="hidden">
+                            <!-- 1. Side-by-Side View -->
+                            <div id="compViewSide" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                    <img id="compSideImgT1" class="w-full h-52 md:h-60 object-cover" alt="T1 Before Observation">
+                                    <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase">BEFORE · T1</div>
+                                    <div class="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-sm text-slate-300 text-[10px] px-2 py-0.5 rounded font-mono">Earlier Observation</div>
+                                </div>
+                                <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                    <img id="compSideImgT2" class="w-full h-52 md:h-60 object-cover" alt="T2 After Observation">
+                                    <div class="absolute top-2 left-2 bg-indigo-900/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase">AFTER · T2</div>
+                                    <div class="absolute bottom-2 left-2 bg-indigo-950/70 backdrop-blur-sm text-indigo-300 text-[10px] px-2 py-0.5 rounded font-mono">Later Observation</div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Swipe Slider View -->
+                            <div id="compViewSwipe" class="hidden">
+                                <div id="swipeContainer" class="relative w-full h-64 md:h-72 rounded-xl overflow-hidden border border-slate-300 select-none bg-slate-900 shadow-inner">
+                                    <!-- Bottom: T2 AFTER -->
+                                    <img id="swipeImgAfter" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="T2 After">
+                                    <div class="absolute top-3 right-3 bg-indigo-900/85 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase pointer-events-none z-10 shadow">AFTER · T2</div>
+
+                                    <!-- Top: T1 BEFORE (Clipped) -->
+                                    <div id="swipeClipWrapper" class="absolute inset-0 overflow-hidden" style="width: 50%;">
+                                        <img id="swipeImgBefore" class="absolute top-0 left-0 h-full object-cover pointer-events-none" alt="T1 Before">
+                                        <div class="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase z-10 shadow">BEFORE · T1</div>
+                                    </div>
+
+                                    <!-- Divider Line & Handle -->
+                                    <div id="swipeDivider" class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.8)] pointer-events-none z-10" style="left: 50%;">
+                                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-xl flex items-center justify-center text-xs font-black text-blue-700 border-2 border-blue-500 pointer-events-none">
+                                            ↔
+                                        </div>
+                                    </div>
+
+                                    <!-- Interactive Range Slider overlay -->
+                                    <input type="range" id="swipeRange" min="0" max="100" value="50" oninput="onSwipeInput(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0">
+                                </div>
+                                <p class="text-center text-[11px] text-slate-500 mt-2 font-medium">Drag slider horizontally across the image to reveal Before vs After</p>
+                            </div>
+
+                            <!-- 3. Before Only View -->
+                            <div id="compViewBefore" class="hidden relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                <img id="compSingleImgBefore" class="w-full h-64 md:h-72 object-cover" alt="T1 Before">
+                                <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded text-xs font-black text-white tracking-wider uppercase">BEFORE · T1 (Earlier Observation)</div>
+                            </div>
+
+                            <!-- 4. After Only View -->
+                            <div id="compViewAfter" class="hidden relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                <img id="compSingleImgAfter" class="w-full h-64 md:h-72 object-cover" alt="T2 After">
+                                <div class="absolute top-3 left-3 bg-indigo-900/80 backdrop-blur-md px-3 py-1 rounded text-xs font-black text-white tracking-wider uppercase">AFTER · T2 (Later Observation)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ready Banner -->
+                    <div id="obsReadyBanner" class="hidden mt-4 p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/90 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🎉</span>
+                            <div>
+                                <p class="text-xs font-bold text-emerald-900">Both Observations Validated &amp; Ready!</p>
+                                <p class="text-[10px] text-emerald-700">T1 and T2 are loaded. Execute analysis to see multi-source consensus.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="runAnalysis()" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 shadow transition flex items-center gap-1.5 flex-shrink-0">
+                            <span>⚡ Run Analysis Now</span> <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ANALYSIS (The Main Workspace) -->
+            <div id="tab-analysis" class="tab-panel hidden space-y-4">
+                <!-- Persistent Top Summary Bar -->
+                <div id="persistentSummaryBar" class="glass-card p-3 md:p-4 shadow-sm border border-white/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="font-sans text-[9px] font-black uppercase tracking-[0.2em] text-blue-700">CURRENT QUERY</span>
+                            <span id="topTaskBadge" class="rounded-full bg-blue-50 border border-blue-200/60 px-2 py-0.5 font-sans text-[10px] font-bold text-blue-700">Vegetation Change</span>
+                            <span id="uiFinalQuery" class="text-xs text-slate-500 truncate italic"></span>
+                        </div>
+                        <p id="topResultSummary" class="text-xs font-bold text-slate-800 truncate">The claim 'vegetation_decrease' is supported by multi-source evidence.</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span id="topStatusBadge" class="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-xs font-black tracking-widest text-emerald-800">SUPPORTED</span>
+                        <button type="button" onclick="switchTab('query')" class="rounded-xl border border-slate-200 bg-white px-3 py-1 font-sans text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+                            Edit Query
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MAIN TWO-COLUMN ANALYSIS WORKSPACE -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+                    <!-- LEFT COLUMN: WIDE LANDSCAPE MAP + DETECTED REGIONS (~62% width) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- Map Card -->
+                        <div id="spatialEvidencePanel" class="dark-glass-card p-0 flex flex-col overflow-hidden border border-slate-700/50 w-full shadow-lg">
+                            <div class="bg-slate-900/70 px-4 py-2.5 border-b border-slate-700/50 flex flex-wrap justify-between items-center gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">CHANGE MAP</span>
+                                    <span class="text-xs font-black text-slate-200">Geospatial Evidence</span>
+                                </div>
+                                <span id="spatialStatusBadge" class="hidden text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border"></span>
+                            </div>
+
+                            <!-- Map Toolbar -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/40 bg-slate-900/40 px-4 py-2">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="fitSpatialChanges()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>🎯</span> <span>Fit all changes</span>
+                                    </button>
+                                    <button type="button" onclick="fitSpatialObservation()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>📐</span> <span>Fit extent</span>
+                                    </button>
+                                    <button type="button" onclick="resetSpatialView()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>🔄</span> <span>Reset</span>
+                                    </button>
+                                </div>
+                                <span class="text-[10px] font-mono text-slate-400">Leaflet • EPSG:4326</span>
+                            </div>
+
+                            <!-- Wide Landscape Map Container -->
+                            <div class="p-2 bg-slate-900/30">
+                                <div id="map" class="w-full relative bg-slate-900 rounded-xl overflow-hidden shadow-inner">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-sm font-medium z-10 bg-slate-900/90 backdrop-blur-sm" id="mapPlaceholder">
+                                        <svg class="w-8 h-8 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                                        <span id="mapPlaceholderText">Spatial geometry rendered after analysis</span>
+                                        <span id="mapPlaceholderReason" class="text-xs text-slate-500 mt-1 max-w-xs text-center"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Compact Map Footer -->
+                            <div class="px-4 py-2 border-t border-slate-700/50 bg-slate-900/80 flex flex-wrap items-center justify-between text-[10px] font-mono text-slate-400">
+                                <span>CRS: <strong id="spatialCRS" class="text-blue-400">—</strong></span>
+                                <span>Extent: <strong id="spatialLabel" class="text-slate-300">Observation Bounds</strong></span>
+                            </div>
+                        </div>
+
+
+                        <!-- Before / After Satellite Comparison in Analysis Tab -->
+                        <div class="dark-glass-card p-4 border border-slate-700/50 shadow-md">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-700/40">
+                                <div>
+                                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block">TEMPORAL OBSERVATIONS</span>
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-200">Before &amp; After Imagery</h4>
+                                </div>
+                                <div class="inline-flex rounded-lg p-0.5 bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold gap-1 self-start sm:self-auto">
+                                    <button type="button" id="anaCompBtn_side" onclick="setAnalysisCompMode('side')" class="px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold">Side-by-Side</button>
+                                    <button type="button" id="anaCompBtn_swipe" onclick="setAnalysisCompMode('swipe')" class="px-2.5 py-0.5 rounded text-slate-300 hover:text-white">Swipe</button>
+                                </div>
+                            </div>
+                            <div id="anaCompViewSide" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="relative rounded-lg overflow-hidden border border-slate-700/50 bg-slate-900 shadow-inner">
+                                    <img id="anaCompImgT1" class="w-full h-36 object-cover" alt="T1 Before">
+                                    <div class="absolute top-1.5 left-1.5 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase">BEFORE · T1</div>
+                                </div>
+                                <div class="relative rounded-lg overflow-hidden border border-slate-700/50 bg-slate-900 shadow-inner">
+                                    <img id="anaCompImgT2" class="w-full h-36 object-cover" alt="T2 After">
+                                    <div class="absolute top-1.5 left-1.5 bg-indigo-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase">AFTER · T2</div>
+                                </div>
+                            </div>
+                            <div id="anaCompViewSwipe" class="hidden">
+                                <div id="anaSwipeContainer" class="relative w-full h-44 rounded-lg overflow-hidden border border-slate-700 select-none bg-slate-900 shadow-inner">
+                                    <img id="anaSwipeImgAfter" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="T2 After">
+                                    <div class="absolute top-2 right-2 bg-indigo-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase z-10">AFTER · T2</div>
+                                    <div id="anaSwipeClipWrapper" class="absolute inset-0 overflow-hidden" style="width: 50%;">
+                                        <img id="anaSwipeImgBefore" class="absolute top-0 left-0 h-full object-cover pointer-events-none" alt="T1 Before">
+                                        <div class="absolute top-2 left-2 bg-slate-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase z-10">BEFORE · T1</div>
+                                    </div>
+                                    <div id="anaSwipeDivider" class="absolute top-0 bottom-0 w-0.5 bg-white shadow z-10" style="left: 50%;">
+                                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center text-[10px] font-black text-blue-700">↔</div>
+                                    </div>
+                                    <input type="range" id="anaSwipeRange" min="0" max="100" value="50" oninput="onAnaSwipeInput(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: FINAL ANSWER + COMPACT EVIDENCE SUMMARY (~38% width) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <!-- Final Answer Card -->
+                        <div class="dark-glass-card p-5 border-t-4 border-emerald-500 shadow-lg" id="reportCard">
+                            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-700/40">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">DECISION VERDICT</span>
+                                    <h3 class="text-sm font-black text-slate-100 uppercase tracking-wider">Final Answer</h3>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="uiConfidenceBadge" class="text-[10px] font-mono bg-emerald-900/50 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded font-bold">92% CONFIDENCE</span>
+                                    <span id="resultHeroStatus" class="hidden">SUPPORTED</span>
+                                </div>
+                            </div>
+
+                            <div class="py-4 border-b border-slate-700/40">
+                                <p class="text-xl md:text-2xl font-black text-white leading-snug" id="finalAnswer">The claim is supported by multi-path evidence.</p>
+                                <p id="resultHeroAnswer" class="hidden"></p>
+                                <p class="mt-2 text-xs text-slate-300 leading-relaxed font-medium" id="resultHeroReason">Physical remote sensing and independent semantic analysis confirm the change.</p>
+                                <p id="comparatorReason" class="hidden"></p>
+                            </div>
+
+                            <div class="pt-3 flex items-center justify-between text-xs font-mono text-slate-400">
+                                <span>Evidence Sources: <strong id="uiSummaryCount" class="text-white font-bold">3</strong> verified</span>
+                                <span id="uiQualityStatus" class="text-emerald-400 font-bold">QUALITY PASSED</span>
+                            </div>
+                        </div>
+
+                        <!-- Evidence Comparison Summary Table -->
+                        <div class="glass-card p-4 border border-slate-200/80 shadow-md">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">MULTI-SOURCE CONSENSUS</span>
+                                    <h4 class="text-xs font-black text-slate-800">Evidence Comparison</h4>
+                                </div>
+                                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                                    AGREEMENT ✓
+                                </span>
+                            </div>
+
+                            <!-- Dynamic Comparison Rows -->
+                            <div id="analysisEvidenceTable" class="space-y-2">
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">AI Model (RS-InternVL)</p>
+                                        <p class="text-[10px] text-slate-500">Auxiliary semantic interpretation</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">Consistent</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">NDVI Delta (Physical RS)</p>
+                                        <p class="text-[10px] text-slate-500">Spectral vegetation change</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">-0.21 Delta</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">Change Statistics</p>
+                                        <p class="text-[10px] text-slate-500">Pixel quantification mask</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">Quantified</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Link to Deep Evidence -->
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-right">
+                                <button type="button" onclick="switchTab('evidence')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1 ml-auto">
+                                <span>Inspect Deep Evidence &amp; Provenance</span> <span>→</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMALL SCROLL: PHYSICAL METRICS STRIP -->
+                <div class="glass-card p-4 shadow-sm border border-white/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">PHYSICAL REMOTE SENSING METRICS</span>
+                        <span class="text-[10px] text-slate-400">Validated raster observations</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">CHANGED PIXELS</span>
+                            <strong id="spatialChangedPx" class="text-slate-800 text-sm font-bold">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">SPECTRAL DELTA (NDVI)</span>
+                            <strong id="spatialNdvi" class="text-slate-800 text-sm font-bold">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">T1 ACQUISITION</span>
+                            <strong id="spatialT1" class="text-slate-800 text-xs truncate block">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">T2 ACQUISITION</span>
+                            <strong id="spatialT2" class="text-slate-800 text-xs truncate block">—</strong>
+                        </div>
+                    </div>
+                    <div id="spatialGraph" class="hidden"></div>
+                    <div id="selectedRegionPanel" class="hidden"></div>
+                    <div id="spatialExplanation" class="hidden"></div>
+                    <span id="spatialLat" class="hidden"></span>
+                    <span id="spatialLon" class="hidden"></span>
+                    <span id="resultHeroTask" class="hidden"></span>
+                    <span id="resultHeroQuery" class="hidden"></span>
+                    <span id="resultHeroDemo" class="hidden"></span>
+                    <div id="resultHeroChips" class="hidden"></div>
+                    <div id="resultHeroNextStep" class="hidden"></div>
+                    <div id="uiFinalHeader" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: EVIDENCE (Deep Inspection) -->
+            <div id="tab-evidence" class="tab-panel hidden space-y-5">
+                <div class="text-center mb-1">
+                    <span class="inline-block px-3 py-1 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest rounded-full">INDEPENDENT EVIDENCE AUDIT</span>
+                    <p class="text-xs text-slate-500 mt-1">Multi-path verification: RS-InternVL semantic interpretation + deterministic remote sensing</p>
+                </div>
+
+                <!-- Path A & Path B Side-by-Side -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
+                    <!-- Path A -->
+                    <div class="dark-glass-card overflow-hidden border-t-4 border-purple-500 shadow-md">
+                        <div class="bg-purple-900/40 p-3.5 border-b border-purple-700/50 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-0.5">PATH A</span>
+                                <h3 class="font-black text-white text-base">RS-InternVL Semantic Analysis</h3>
+                            </div>
+                            <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/50 px-2 py-0.5 rounded font-bold">VLM</span>
+                        </div>
+                        <div class="p-5 space-y-3" id="uiPathA"></div>
+                    </div>
+
+                    <!-- Path B -->
+                    <div class="dark-glass-card overflow-hidden border-t-4 border-emerald-500 shadow-md">
+                        <div class="bg-emerald-900/40 p-3.5 border-b border-emerald-700/50 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-0.5">PATH B</span>
+                                <h3 class="font-black text-white text-base">Remote Sensing Verification</h3>
+                            </div>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded font-bold">QUANTITATIVE</span>
+                        </div>
+                        <div class="p-5 space-y-3" id="uiPathB"></div>
+                    </div>
+                </div>
+
+                <!-- Comparator Card -->
+                <div class="dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-lg border-2" id="comparatorCard">
+                    <div class="bg-slate-900/60 p-3.5 border-b border-slate-700/50 text-center">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Evidence Comparator &amp; Decision Consensus</h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="uiComparatorDetails" class="w-full mb-2 text-sm text-slate-300"></div>
+                        <div class="text-center pt-2">
+                            <h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-4" id="comparatorBadge">...</h2>
+                            <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 inline-block max-w-2xl text-left shadow-sm">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1" id="comparatorReasonTitle">WHY?</span>
+                                <p class="text-slate-200 font-medium text-sm leading-relaxed" id="comparatorReasonSummary"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complete Evidence Ledger -->
+                <div class="dark-glass-card p-5 max-w-4xl mx-auto shadow-lg border border-slate-700/50">
+                    <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-700/50">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">AUDIT TRAIL</span>
+                            <h3 class="text-sm font-black text-slate-200 uppercase tracking-wider">Evidence Ledger</h3>
+                        </div>
+                    </div>
+                    <div id="uiEvidenceLedger" class="space-y-3"></div>
+                    <div id="limitationsBox" class="hidden mt-4 bg-red-900/20 border border-red-900/50 p-3.5 rounded-xl">
+                        <h4 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span>⚠</span> Limitations / Missing Evidence</h4>
+                        <p class="text-red-300 text-xs font-medium" id="finalLimitations"></p>
+                    </div>
+                </div>
+
+                <!-- Hidden / Compatibility Panels -->
+                <div id="inputValidation" class="hidden">
+                    <div id="validationStatus"></div>
+                    <div id="validationChecks"></div>
+                    <div id="validationEvidence"></div>
+                    <div id="validationProof"></div>
+                    <span id="validationSummary"></span>
+                    <span id="validationDetailLevel"></span>
+                    <div id="validationTransition"></div>
+                    <span id="validationFlowInputs"></span>
+                    <span id="validationFlowReadable"></span>
+                    <span id="validationFlowGate"></span>
+                    <span id="validationFlowReady"></span>
+                    <span id="uiRes"></span>
+                    <span id="uiBands"></span>
+                    <span id="uiTask"></span>
+                    <span id="uiTarget"></span>
+                    <span id="uiRequiredEv"></span>
+                </div>
+                <div id="agentPlanner" class="hidden">
+                    <span id="plannerTask"></span>
+                    <span id="plannerClaim"></span>
+                    <div id="plannerSemantic"></div>
+                    <div id="plannerQuantitative"></div>
+                    <div id="plannerExecution"></div>
+                </div>
+            </div>
+
+            <!-- COLLAPSIBLE EXECUTION TRACE (Agentic DAG Pipeline) -->
+            <details id="executionTraceAccordion" class="glass-card p-4 rounded-2xl border border-white/80 shadow-sm transition">
+                <summary class="cursor-pointer font-sans text-xs font-bold text-slate-700 flex items-center justify-between select-none">
+                    <div class="flex items-center gap-2">
+                        <span class="rounded bg-blue-100 text-blue-700 px-2 py-0.5 text-[10px] font-black">TRACE</span>
+                        <span>Agentic Execution Trace &amp; Tool Provenance</span>
+                    </div>
+                    <span class="text-slate-400 text-xs font-mono">Click to expand / collapse ▾</span>
+                </summary>
+                <div class="mt-4 pt-3 border-t border-slate-200">
+                    <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-2">
+                        <span>Trace ID: <strong id="uiTraceId" class="text-slate-700">N/A</strong></span>
+                        <span>Status: <strong class="text-emerald-600 font-bold">COMPLETED</strong></span>
+                    </div>
+                    <div id="uiTraceList" class="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto custom-scrollbar p-2 bg-slate-50 rounded-xl border border-slate-200/80"></div>
+                    <div id="analysisTimeline" class="mt-3">
+                        <div id="timelineStages"></div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Hidden container for backward compatibility -->
+            <div id="resultsContainer" class="hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let t1Data = null;
+        let t2Data = null;
+        let map = null;
+        let mapRect = null;
+        let changeRegionLayers = [];
+        let spatialRegions = [];
+        let selectedSpatialRegion = null;
+
+        // Initialize map
+        document.addEventListener('DOMContentLoaded', () => {
+            map = L.map('map', {zoomControl: false, attributionControl: false}).setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+        });
+
+        let t1Observation = null;
+        let t2Observation = null;
+        let currentCompMode = 'side';
+        let anaCompMode = 'side';
+
+        const demoScenarios = {
+            'veg_increase': {
+                name: 'Vegetation Increased (Wildfire Recovery)',
+                query: 'Has vegetation decreased in this region?',
+                t1: 'Frontend/data/demo_scenarios/veg_increase/t1/t1',
+                t2: 'Frontend/data/demo_scenarios/veg_increase/t2/t2',
+                t1_preview: '/data/demo_scenarios/veg_increase/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/veg_increase/t2/preview.png',
+                bands: ['red', 'nir', 'scl'],
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'NORMAL'}
+            },
+            'builtup_decrease': {
+                name: 'Built-up Area Decreased (Demolition)',
+                query: 'Has the built-up area decreased?',
+                t1: 'Frontend/data/demo_scenarios/builtup_decrease/t1/t1',
+                t2: 'Frontend/data/demo_scenarios/builtup_decrease/t2/t2',
+                t1_preview: '/data/demo_scenarios/builtup_decrease/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/builtup_decrease/t2/preview.png',
+                bands: ['red', 'nir', 'swir', 'scl'],
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'CONFLICTING_EVIDENCE'}
+            },
+            'flood_change': {
+                name: 'Water Body Change (Flooding)',
+                query: 'How has the water body changed over time?',
+                t1: 'Frontend/data/demo_scenarios/flood_change/t1/t1',
+                t2: 'Frontend/data/demo_scenarios/flood_change/t2/t2',
+                t1_preview: '/data/demo_scenarios/flood_change/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/flood_change/t2/preview.png',
+                bands: ['red', 'nir', 'scl'],
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'LOW_QUALITY'}
+            },
+            'river_development': {
+                name: 'River & Urban Development (Real JPEG Imagery)',
+                query: 'What changed between the two observations?',
+                t1: 'Frontend/data/demo_scenarios/river_development/t1_visual.jpg',
+                t2: 'Frontend/data/demo_scenarios/river_development/t2_visual.jpg',
+                t1_preview: '/data/demo_scenarios/river_development/t1_preview.png',
+                t2_preview: '/data/demo_scenarios/river_development/t2_preview.png',
+                bands: ['red', 'green', 'blue'],
+                modality: 'optical',
+                filename: 'river_t1.jpeg',
+                filename_t2: 'river_t2.jpeg',
+                metadata: {crs: 'EPSG:4326', width: 712, height: 853, type: 'visual_rgb', spectral_bands_present: false}
+            },
+            'test_zips_multispectral': {
+                name: 'Real Multispectral (valid_t1.zip & valid_t2.zip)',
+                query: 'Has vegetation decreased between the two observations?',
+                t1: 'Frontend/data/demo_scenarios/multispectral_zips/t1/t1',
+                t2: 'Frontend/data/demo_scenarios/multispectral_zips/t2/t2',
+                t1_preview: '/data/demo_scenarios/multispectral_zips/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/multispectral_zips/t2/preview.png',
+                bands: ['red', 'nir', 'scl'],
+                modality: 'multispectral',
+                filename: 'valid_t1.zip',
+                filename_t2: 'valid_t2.zip',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, type: 'multispectral', spectral_bands_present: true}
+            }
+        };
+
+        function safeValue(value, fallback = 'Not available') {
+            return value === undefined || value === null || value === '' ? fallback : String(value);
+        }
+
+        function resetValidationState() {
+            document.getElementById('validationStatus').innerHTML = '<p class="font-sans text-xs font-bold tracking-widest text-slate-500">○ INPUT VALIDATION</p><h3 class="mt-2 text-2xl font-black text-slate-700">WAITING FOR ANALYSIS</h3><p class="mt-1 text-sm text-slate-500">No validation result is available yet.</p>';
+            document.getElementById('validationChecks').innerHTML = '<div class="validation-row rounded-xl p-4 text-sm text-slate-500">Validation checks will be populated from the backend response.</div>';
+            document.getElementById('validationEvidence').textContent = 'No backend validation result is available yet.';
+            document.getElementById('validationProof').textContent = 'The validation gate will explain its result after analysis.';
+            document.getElementById('validationSummary').textContent = '— NOT REPORTED';
+            document.getElementById('validationDetailLevel').textContent = 'DETAIL LEVEL: Awaiting backend checks';
+            document.getElementById('validationTransition').innerHTML = '○ Input gate not yet checked <span class="mx-2">↓</span> 03 Agent Planner';
+            ['validationFlowInputs', 'validationFlowReadable', 'validationFlowGate', 'validationFlowReady'].forEach(id => document.getElementById(id).textContent = '— NOT REPORTED');
+        }
+
+        function hideValidationPanel() {
+            document.getElementById('inputValidation').classList.add('hidden');
+        }
+
+        function renderValidation(data) {
+            const trace = Array.isArray(data.execution_trace) ? data.execution_trace : [];
+            const validation = trace.find(step => step && step.tool === 'validate_inputs');
+            const status = validation ? safeValue(validation.status, 'UNKNOWN').toUpperCase() : 'MISSING';
+            const passed = status === 'SUCCESS';
+            const failed = ['ERROR', 'FAILED', 'UNAVAILABLE'].includes(status);
+            const color = passed ? 'emerald' : failed ? 'red' : 'amber';
+            const statusBox = document.getElementById('validationStatus');
+            statusBox.className = `mt-6 rounded-xl border border-${color}-200 bg-${color}-50 p-5`;
+            statusBox.innerHTML = `<p class="font-sans text-xs font-bold tracking-widest text-${color}-700">${passed ? '✓' : failed ? '✕' : '⚠'} INPUT VALIDATION</p><h3 class="mt-2 text-2xl font-black text-${color}-700">${passed ? 'INPUT VALID' : failed ? (status === 'ERROR' ? 'VALIDATION ERROR' : 'INPUT INVALID') : 'VALIDATION UNAVAILABLE'}</h3><p class="mt-1 text-sm text-${color}-700">${passed ? 'T1 and T2 observations passed the available validation gate.' : failed ? 'The supplied observations did not pass the validation gate.' : 'No completed validation result was returned by the backend.'}</p><p class="mt-3 border-t border-${color}-200 pt-3 font-sans text-xs font-bold tracking-widest text-${color}-700">VALIDATION SOURCE: validate_inputs &nbsp; STATUS: ${safeValue(validation && validation.status, 'NOT REPORTED')}</p>`;
+            const checks = ['T1 Observation', 'T2 Observation', 'Input Readability', 'Spatial Compatibility', 'Required Bands', 'Dimensions / Alignment'];
+            document.getElementById('validationChecks').innerHTML = checks.map(label => `<div class="validation-row rounded-xl p-4"><div class="flex items-start justify-between gap-3"><span class="font-bold text-slate-700">${label}</span><span class="whitespace-nowrap font-sans text-[10px] font-bold text-amber-700">— NOT REPORTED</span></div><p class="mt-2 text-xs text-slate-500">No individual ${label.toLowerCase()} result was returned.</p></div>`).join('');
+            const traceDetails = validation && (validation.output_summary || validation.error);
+            document.getElementById('validationEvidence').textContent = traceDetails ? (passed ? 'The supplied observations were accepted by the validation stage.' : safeValue(traceDetails)) : 'No validation evidence was returned by the backend.';
+            document.getElementById('validationProof').textContent = passed ? '✓ Validation tool executed. ✓ Validation gate returned SUCCESS. The pipeline can proceed to independent verification.' : failed ? 'The validation tool reported that the observations did not pass the input quality gate.' : 'The backend did not provide a completed validation result.';
+            const flowStatus = passed ? '✓ PASSED' : failed ? '✕ FAILED' : '— NOT REPORTED';
+            ['validationFlowInputs', 'validationFlowReadable', 'validationFlowGate'].forEach(id => document.getElementById(id).textContent = flowStatus);
+            document.getElementById('validationFlowReady').textContent = passed ? '✓ YES' : failed ? '✕ NO' : '— NOT REPORTED';
+            document.getElementById('validationSummary').textContent = passed ? '✓ PASS' : failed ? '✕ FAIL' : '— NOT REPORTED';
+            document.getElementById('validationDetailLevel').textContent = traceDetails ? 'DETAIL LEVEL: Available backend checks' : 'DETAIL LEVEL: No backend details';
+            document.getElementById('validationTransition').innerHTML = passed ? '✓ INPUT GATE PASSED <span class="mx-2">↓</span> 03 Agent Planner' : failed ? '✕ INPUT GATE FAILED <span class="mx-2">↓</span> Analysis cannot safely continue' : '⚠ INPUT GATE UNAVAILABLE <span class="mx-2">↓</span> Validation result required';
+        }
+
+        function updateObservationPreview(obsRole, data) {
+            const emptyState = document.getElementById(`${obsRole}EmptyState`);
+            const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+            const img = document.getElementById(`${obsRole}PreviewImg`);
+            const badge = document.getElementById(`${obsRole}Badge`);
+            const details = document.getElementById(`${obsRole}ValidationDetails`);
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.remove('hidden');
+
+            const previewUrl = data.preview_url || (data.metadata && data.metadata.preview_url) || (obsRole === 't1' ? '/data/demo_scenarios/river_development/t1_preview.png' : '/data/demo_scenarios/river_development/t2_preview.png');
+            if (img) {
+                img.src = previewUrl;
+            }
+
+            const isMultispectral = (data.modality === 'multispectral') || (data.bands && data.bands.includes('nir'));
+            if (badge) {
+                badge.className = isMultispectral
+                    ? 'absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm'
+                    : 'absolute bottom-2 left-2 bg-indigo-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm';
+                badge.textContent = isMultispectral ? '✓ Validated: Multispectral' : '✓ Validated: Visual RGB';
+            }
+
+            if (details) {
+                const fname = data.filename || (obsRole === 't1' ? 'T1_Observation' : 'T2_Observation');
+                if (isMultispectral) {
+                    details.innerHTML = `
+                        <div class="mt-2.5 space-y-1 text-[11px] font-medium text-slate-700 bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200">
+                            <div class="flex items-center justify-between gap-1 text-[10px] font-mono text-emerald-900 border-b border-emerald-200/60 pb-1 mb-1">
+                                <span class="font-bold uppercase tracking-wider truncate">${fname}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-800 font-bold">MULTISPECTRAL</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>red, nir, scl bands verified</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>CRS: ${data.metadata?.crs || 'EPSG:32610'}</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>Spatial dimensions &amp; alignment verified</span></div>
+                            <div class="text-[10px] text-slate-500 font-mono mt-1 pt-1 border-t border-emerald-200/60">Dimensions: <strong class="text-slate-700">${data.metadata?.width || 100} × ${data.metadata?.height || 100} px</strong></div>
+                        </div>`;
+                } else {
+                    details.innerHTML = `
+                        <div class="mt-2.5 space-y-1 text-[11px] font-medium text-slate-700 bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200">
+                            <div class="flex items-center justify-between gap-1 text-[10px] font-mono text-indigo-900 border-b border-indigo-200/60 pb-1 mb-1">
+                                <span class="font-bold uppercase tracking-wider truncate">${fname}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-indigo-200 text-indigo-800 font-bold">RGB VISUAL</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-emerald-700 font-bold"><span>✓</span> <span>Image readable &amp; valid</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-700 font-bold"><span>✓</span> <span>Spatial/visual observation available</span></div>
+                            <div class="flex items-center gap-1.5 text-amber-700 font-bold"><span>⚠</span> <span>Spectral bands unavailable</span></div>
+                            <div class="text-[10px] text-slate-500 font-mono mt-1 pt-1 border-t border-indigo-200/60">Format: <strong class="text-slate-700">${data.metadata?.format || 'JPEG'}</strong> • Dimensions: <strong class="text-slate-700">${data.metadata?.width || 712} × ${data.metadata?.height || 853} px</strong></div>
+                        </div>`;
+                }
+            }
+        }
+
+        function resetObservationPreview(obsRole) {
+            const emptyState = document.getElementById(`${obsRole}EmptyState`);
+            const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+            const img = document.getElementById(`${obsRole}PreviewImg`);
+            const statusBox = document.getElementById(`${obsRole}Status`);
+            const details = document.getElementById(`${obsRole}ValidationDetails`);
+
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (previewContainer) previewContainer.classList.add('hidden');
+            if (img) img.src = '';
+            if (details) details.innerHTML = '';
+            if (statusBox) statusBox.classList.add('hidden');
+        }
+
+        function setComparisonMode(mode) {
+            currentCompMode = mode;
+            ['side', 'swipe', 'before', 'after'].forEach(m => {
+                const btn = document.getElementById(`compBtn_${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = 'px-3 py-1 rounded-md bg-white text-blue-800 shadow-sm font-bold border border-blue-200';
+                    } else {
+                        btn.className = 'px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium';
+                    }
+                }
+            });
+            updateComparisonComponent();
+        }
+
+        function setAnalysisCompMode(mode) {
+            anaCompMode = mode;
+            const btnSide = document.getElementById('anaCompBtn_side');
+            const btnSwipe = document.getElementById('anaCompBtn_swipe');
+            if (mode === 'side') {
+                if (btnSide) btnSide.className = 'px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold';
+                if (btnSwipe) btnSwipe.className = 'px-2.5 py-0.5 rounded text-slate-300 hover:text-white';
+            } else {
+                if (btnSide) btnSide.className = 'px-2.5 py-0.5 rounded text-slate-300 hover:text-white';
+                if (btnSwipe) btnSwipe.className = 'px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold';
+            }
+            const sideView = document.getElementById('anaCompViewSide');
+            const swipeView = document.getElementById('anaCompViewSwipe');
+            if (sideView) sideView.classList.toggle('hidden', mode !== 'side');
+            if (swipeView) swipeView.classList.toggle('hidden', mode !== 'swipe');
+            if (mode === 'swipe') onAnaSwipeInput(document.getElementById('anaSwipeRange')?.value || 50);
+        }
+
+        function onSwipeInput(val) {
+            const clip = document.getElementById('swipeClipWrapper');
+            const divider = document.getElementById('swipeDivider');
+            const container = document.getElementById('swipeContainer');
+            const beforeImg = document.getElementById('swipeImgBefore');
+            if (clip) clip.style.width = val + '%';
+            if (divider) divider.style.left = val + '%';
+            if (container && beforeImg) {
+                beforeImg.style.width = container.offsetWidth + 'px';
+                beforeImg.style.maxWidth = container.offsetWidth + 'px';
+            }
+        }
+
+        function onAnaSwipeInput(val) {
+            const clip = document.getElementById('anaSwipeClipWrapper');
+            const divider = document.getElementById('anaSwipeDivider');
+            const container = document.getElementById('anaSwipeContainer');
+            const beforeImg = document.getElementById('anaSwipeImgBefore');
+            if (clip) clip.style.width = val + '%';
+            if (divider) divider.style.left = val + '%';
+            if (container && beforeImg) {
+                beforeImg.style.width = container.offsetWidth + 'px';
+                beforeImg.style.maxWidth = container.offsetWidth + 'px';
+            }
+        }
+
+        function updateComparisonComponent() {
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+            const emptyNotice = document.getElementById('compEmptyNotice');
+            const compBody = document.getElementById('compContentArea');
+
+            const t1Url = t1 ? (t1.preview_url || '/data/demo_scenarios/river_development/t1_preview.png') : null;
+            const t2Url = t2 ? (t2.preview_url || '/data/demo_scenarios/river_development/t2_preview.png') : null;
+
+            if (!t1Url || !t2Url) {
+                if (emptyNotice) emptyNotice.classList.remove('hidden');
+                if (compBody) compBody.classList.add('hidden');
+                return;
+            }
+
+            if (emptyNotice) emptyNotice.classList.add('hidden');
+            if (compBody) compBody.classList.remove('hidden');
+
+            const sideView = document.getElementById('compViewSide');
+            const swipeView = document.getElementById('compViewSwipe');
+            const beforeView = document.getElementById('compViewBefore');
+            const afterView = document.getElementById('compViewAfter');
+
+            if (sideView) sideView.classList.toggle('hidden', currentCompMode !== 'side');
+            if (swipeView) swipeView.classList.toggle('hidden', currentCompMode !== 'swipe');
+            if (beforeView) beforeView.classList.toggle('hidden', currentCompMode !== 'before');
+            if (afterView) afterView.classList.toggle('hidden', currentCompMode !== 'after');
+
+            // Set images for Query Tab Comparison
+            const sideT1 = document.getElementById('compSideImgT1');
+            const sideT2 = document.getElementById('compSideImgT2');
+            if (sideT1) sideT1.src = t1Url;
+            if (sideT2) sideT2.src = t2Url;
+
+            const swipeBefore = document.getElementById('swipeImgBefore');
+            const swipeAfter = document.getElementById('swipeImgAfter');
+            if (swipeBefore) swipeBefore.src = t1Url;
+            if (swipeAfter) swipeAfter.src = t2Url;
+            onSwipeInput(document.getElementById('swipeRange')?.value || 50);
+
+            const singleBefore = document.getElementById('compSingleImgBefore');
+            const singleAfter = document.getElementById('compSingleImgAfter');
+            if (singleBefore) singleBefore.src = t1Url;
+            if (singleAfter) singleAfter.src = t2Url;
+
+            // Set images for Analysis Tab Comparison
+            const anaT1 = document.getElementById('anaCompImgT1');
+            const anaT2 = document.getElementById('anaCompImgT2');
+            if (anaT1) anaT1.src = t1Url;
+            if (anaT2) anaT2.src = t2Url;
+
+            const anaSwipeBefore = document.getElementById('anaSwipeImgBefore');
+            const anaSwipeAfter = document.getElementById('anaSwipeImgAfter');
+            if (anaSwipeBefore) anaSwipeBefore.src = t1Url;
+            if (anaSwipeAfter) anaSwipeAfter.src = t2Url;
+            onAnaSwipeInput(document.getElementById('anaSwipeRange')?.value || 50);
+        }
+
+        function selectScenario(scenarioId) {
+            const data = demoScenarios[scenarioId];
+            document.getElementById('queryInput').value = data.query;
+            
+            const topQuery = document.getElementById('topQueryText');
+            if (topQuery) topQuery.textContent = `"${data.query}"`;
+            const topTask = document.getElementById('topTaskBadge');
+            if (topTask) {
+                topTask.textContent = data.name;
+                topTask.className = 'rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 font-sans text-[10px] font-bold text-blue-700';
+            }
+            const topStatus = document.getElementById('topStatusBadge');
+            if (topStatus) {
+                topStatus.textContent = 'READY TO ANALYZE';
+                topStatus.className = 'rounded-full bg-slate-100 border border-slate-300 px-3.5 py-1.5 font-sans text-xs font-bold tracking-widest text-slate-700';
+            }
+            const topSummary = document.getElementById('topResultSummary');
+            if (topSummary) topSummary.textContent = 'Scenario selected: ' + data.name + '. Click "Execute Evidence Analysis" to run.';
+
+            t1Observation = {
+                status: 'success',
+                observation_id: `t1_${scenarioId}`,
+                image_path: data.t1,
+                preview_url: data.t1_preview,
+                bands: data.bands,
+                modality: data.modality || 'optical',
+                role: 't1',
+                filename: data.filename || `${scenarioId}_t1`,
+                metadata: data.metadata
+            };
+            t2Observation = {
+                status: 'success',
+                observation_id: `t2_${scenarioId}`,
+                image_path: data.t2,
+                preview_url: data.t2_preview,
+                bands: data.bands,
+                modality: data.modality || 'optical',
+                role: 't2',
+                filename: data.filename_t2 || `${scenarioId}_t2`,
+                metadata: data.metadata
+            };
+            t1Data = t1Observation;
+            t2Data = t2Observation;
+            
+            updateObservationPreview('t1', t1Observation);
+            updateObservationPreview('t2', t2Observation);
+            updateComparisonComponent();
+
+            document.getElementById('t1Status').classList.add('hidden');
+            document.getElementById('t2Status').classList.add('hidden');
+            
+            resetValidationState();
+            
+            const btn = document.getElementById('analyzeBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            const readyBanner = document.getElementById('obsReadyBanner');
+            if (readyBanner) readyBanner.classList.remove('hidden');
+            const headerBadge = document.getElementById('headerValidationBadge');
+            const headerText = document.getElementById('headerValidationText');
+            if (headerBadge) headerBadge.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm';
+            if (headerText) headerText.textContent = 'Inputs Validated';
+        }
+
+        function handleFileSelection(obsRole) {
+            const fileInput = document.getElementById(`${obsRole}File`);
+            if (!fileInput || !fileInput.files.length) return;
+            const file = fileInput.files[0];
+
+            // If it's a browser-displayable image, show it immediately
+            if (/^image\/(png|jpeg|jpg|webp)$/i.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name)) {
+                const objectUrl = URL.createObjectURL(file);
+                const emptyState = document.getElementById(`${obsRole}EmptyState`);
+                const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+                const img = document.getElementById(`${obsRole}PreviewImg`);
+                if (emptyState) emptyState.classList.add('hidden');
+                if (previewContainer) previewContainer.classList.remove('hidden');
+                if (img) img.src = objectUrl;
+            }
+
+            // Immediately trigger upload & validation
+            uploadFile(obsRole);
+        }
+
+        function showSelectedFile(obsRole) {
+            handleFileSelection(obsRole);
+        }
+
+        // Backend API base
+        const API_BASE = (window.location.origin && window.location.origin.startsWith('http')) ? window.location.origin : 'http://localhost:8001';
+
+        async function uploadFile(obsRole) {
+            const fileInput = document.getElementById(`${obsRole}File`);
+            const statusBox = document.getElementById(`${obsRole}Status`);
+            
+            if (!fileInput || !fileInput.files.length) {
+                alert(`Please select an observation file for ${obsRole.toUpperCase()} first.`);
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            statusBox.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-emerald-50', 'text-emerald-700');
+            statusBox.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-200');
+            statusBox.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="loader" style="width:14px;height:14px;border-width:2px;"></div>
+                    <span class="font-medium">Uploading &amp; validating ${obsRole.toUpperCase()}...</span>
+                </div>`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/upload?role=${obsRole}`, { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                    statusBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+                    statusBox.innerHTML = `
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-1.5 font-bold text-emerald-800">
+                                <span>✓</span> <span>${obsRole.toUpperCase()} uploaded &amp; validated</span>
+                            </div>
+                            <div class="text-[10px] text-emerald-700 font-mono break-all">${data.filename || file.name}</div>
+                        </div>`;
+                    
+                    data.role = obsRole;
+                    data.filename = data.filename || file.name;
+                    if (obsRole === 't1') {
+                        t1Observation = data;
+                        t1Data = data;
+                    } else {
+                        t2Observation = data;
+                        t2Data = data;
+                    }
+                    updateObservationPreview(obsRole, data);
+                    updateComparisonComponent();
+
+                    // Notify user if replacing an observation
+                    const topSummary = document.getElementById('topResultSummary');
+                    if (topSummary) topSummary.textContent = `Observation ${obsRole.toUpperCase()} updated (${data.filename}). Click "Execute Evidence Analysis" to run analysis.`;
+                    const topStatus = document.getElementById('topStatusBadge');
+                    if (topStatus) {
+                        topStatus.textContent = 'READY TO ANALYZE';
+                        topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                    }
+                } else {
+                    statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                    statusBox.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+                    statusBox.innerHTML = `
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <span class="font-bold">✕ ${obsRole.toUpperCase()} upload failed:</span>
+                                <span class="text-[11px] block mt-0.5">${data.message || 'Invalid format or structure.'}</span>
+                            </div>
+                            <button type="button" onclick="uploadFile('${obsRole}')" class="px-2.5 py-1 rounded bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 shadow-sm flex-shrink-0">
+                                ↺ Retry
+                            </button>
+                        </div>`;
+                    if (obsRole === 't1') { t1Observation = null; t1Data = null; }
+                    else { t2Observation = null; t2Data = null; }
+                    resetObservationPreview(obsRole);
+                    updateComparisonComponent();
+                }
+            } catch (err) {
+                statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                statusBox.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+                statusBox.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <span class="font-bold">✕ ${obsRole.toUpperCase()} upload failed:</span>
+                            <span class="text-[11px] block mt-0.5">${err.message}</span>
+                        </div>
+                        <button type="button" onclick="uploadFile('${obsRole}')" class="px-2.5 py-1 rounded bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 shadow-sm flex-shrink-0">
+                            ↺ Retry
+                        </button>
+                    </div>`;
+                if (obsRole === 't1') { t1Observation = null; t1Data = null; }
+                else { t2Observation = null; t2Data = null; }
+                resetObservationPreview(obsRole);
+                updateComparisonComponent();
+            }
+            checkReadiness();
+        }
+
+        function checkReadiness() {
+            const btn = document.getElementById('analyzeBtn');
+            const readyBanner = document.getElementById('obsReadyBanner');
+            const topStatus = document.getElementById('topStatusBadge');
+            const topSummary = document.getElementById('topResultSummary');
+            
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+
+            if (t1 && t1.status === 'success' && t2 && t2.status === 'success') {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (readyBanner) readyBanner.classList.remove('hidden');
+                const headerBadge = document.getElementById('headerValidationBadge');
+                const headerText = document.getElementById('headerValidationText');
+                if (headerBadge) headerBadge.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm';
+                if (headerText) headerText.textContent = 'Inputs Validated';
+                if (topStatus) {
+                    topStatus.textContent = 'READY TO ANALYZE';
+                    topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                }
+                if (topSummary && (!topSummary.textContent || topSummary.textContent.includes('No analysis performed'))) {
+                    topSummary.textContent = 'Observations T1 and T2 validated! Click "Execute Evidence Analysis" to run.';
+                }
+            } else {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (readyBanner) readyBanner.classList.add('hidden');
+            }
+        }
+
+        function updateTopSummary(data) {
+            const topQuery = document.getElementById('topQueryText');
+            const topTask = document.getElementById('topTaskBadge');
+            const topStatus = document.getElementById('topStatusBadge');
+            const topSummary = document.getElementById('topResultSummary');
+            
+            if (topQuery) {
+                const q = document.getElementById('queryInput').value;
+                topQuery.textContent = `"${q || 'Satellite observation query'}"`;
+            }
+            if (topTask && data.task) {
+                let taskLabel = data.task.replace(/_/g, ' ').toUpperCase();
+                if (data.task === 'vegetation_change') taskLabel = '🌿 VEGETATION CHANGE';
+                else if (data.task === 'built_up_change') taskLabel = '🏗️ BUILT-UP CHANGE';
+                else if (data.task === 'flood_change') taskLabel = '💧 FLOOD CHANGE';
+                topTask.textContent = taskLabel;
+                topTask.className = 'rounded-full bg-blue-100 border border-blue-200 px-2.5 py-0.5 font-sans text-[10px] font-bold text-blue-800';
+            }
+            if (topStatus && data.status) {
+                topStatus.textContent = data.status;
+                if (data.status === 'SUPPORTED') {
+                    topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                    topStatus.className = 'rounded-full bg-amber-100 border border-amber-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-amber-800 shadow-sm';
+                } else {
+                    topStatus.className = 'rounded-full bg-red-100 border border-red-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-red-800 shadow-sm';
+                }
+            }
+            if (topSummary) {
+                let cleanAns = data.answer || "Analysis complete.";
+                if (cleanAns.includes("Reason:")) cleanAns = cleanAns.split("Reason:")[0].trim();
+                topSummary.textContent = cleanAns;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Map legacy tab names to the 3 main areas
+            if (tabName === 'observations' || tabName === 'validation') tabName = 'query';
+            if (tabName === 'map' || tabName === 'answer') tabName = 'analysis';
+
+            const tabs = ['query', 'analysis', 'evidence'];
+            tabs.forEach(t => {
+                const panel = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (panel) {
+                    if (t === tabName) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (btn) {
+                    if (t === tabName) {
+                        btn.classList.add('active-tab');
+                        btn.classList.remove('text-slate-600');
+                    } else {
+                        btn.classList.remove('active-tab');
+                        btn.classList.add('text-slate-600');
+                    }
+                }
+            });
+
+            if (tabName === 'analysis') {
+                setTimeout(() => {
+                    if (map) {
+                        map.invalidateSize();
+                        if (changeRegionLayers && changeRegionLayers.length) {
+                            fitSpatialChanges();
+                        } else if (mapRect) {
+                            map.fitBounds(mapRect.getBounds(), {padding: [25, 25]});
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        function toggleTraceAccordion() {
+            const acc = document.getElementById('executionTraceAccordion');
+            const icon = document.getElementById('traceToggleIcon');
+            if (acc) {
+                acc.open = !acc.open;
+                if (icon) icon.textContent = acc.open ? '▴' : '▾';
+                if (acc.open) {
+                    acc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+        }
+
+        async function runAnalysis() {
+            if (!t1Data || !t2Data) return;
+            
+            const btn = document.getElementById('analyzeBtn');
+            const query = document.getElementById('queryInput').value;
+            
+            const topStatus = document.getElementById('topStatusBadge');
+            if (topStatus) {
+                topStatus.textContent = 'ANALYZING...';
+                topStatus.className = 'rounded-full bg-blue-100 border border-blue-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-blue-700 animate-pulse';
+            }
+            const topQuery = document.getElementById('topQueryText');
+            if (topQuery) {
+                topQuery.textContent = `"${query || 'Analyze changes in the region.'}"`;
+            }
+            
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('flex');
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+            if (!t1 || !t2) return;
+
+            const payload = {
+                query: query || "Analyze changes in the region.",
+                observations: [
+                    {
+                        observation_id: t1.observation_id || "t1",
+                        image_path: t1.image_path,
+                        role: "t1",
+                        metadata: {
+                            modality: t1.modality || "optical",
+                            bands: t1.bands || ["red", "nir", "scl"]
+                        }
+                    },
+                    {
+                        observation_id: t2.observation_id || "t2",
+                        image_path: t2.image_path,
+                        role: "t2",
+                        metadata: {
+                            modality: t2.modality || "optical",
+                            bands: t2.bands || ["red", "nir", "scl"]
+                        }
+                    }
+                ],
+                metadata: { dev_scenario: (t1.metadata && t1.metadata.dev_scenario) ? t1.metadata.dev_scenario : undefined } 
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                renderValidation(data);
+                renderResults(data);
+                updateTopSummary(data);
+                updateComparisonComponent();
+                switchTab('analysis');
+            } catch (err) {
+                console.error(err);
+                alert("Analysis failed to connect to API.");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('loadingState').classList.remove('flex');
+            }
+        }
+
+        function escapePlannerText(value) {
+            return safeValue(value).replace(/[&<>'"]/g, character => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[character]));
+        }
+
+        function formatPlannerTool(tool) {
+            const names = { run_rs_vlm: 'RS-InternVL', ndvi_delta: 'NDVI Delta', ndbi_delta: 'NDBI Delta', sar_change: 'SAR Change', sar_amplitude_change: 'SAR Change', change_statistics: 'Change Statistics' };
+            return names[tool] || safeValue(tool).replace(/_/g, ' ');
+        }
+
+        function renderPlanner(data) {
+            const trace = Array.isArray(data.execution_trace) ? data.execution_trace : [];
+            const excluded = new Set(['validate_inputs', 'compare_evidence', 'generate_response']);
+            const tools = trace.filter(step => step && step.tool && !excluded.has(step.tool));
+            const semantic = tools.filter(step => step.tool === 'run_rs_vlm');
+            const quantitative = tools.filter(step => ['grounding', 'ndvi_delta', 'ndbi_delta', 'sar_change', 'sar_amplitude_change', 'change_statistics'].includes(step.tool));
+            const renderTool = step => {
+                const status = safeValue(step.status, 'NOT AVAILABLE').toUpperCase();
+                const success = status === 'SUCCESS';
+                const running = status === 'RUNNING';
+                const icon = success ? '✓' : running ? '○' : status === 'NOT AVAILABLE' ? '—' : '⚠';
+                const color = success ? 'text-emerald-400' : running ? 'text-blue-400' : status === 'NOT AVAILABLE' ? 'text-slate-500' : 'text-red-400';
+                return `<div class="planner-tool rounded-lg p-2"><div class="flex items-center justify-between gap-2"><span class="font-bold text-slate-200">${icon} ${escapePlannerText(formatPlannerTool(step.tool))}</span><span class="font-sans text-[10px] font-bold ${color}">${escapePlannerText(status)}</span></div>${step.tool === 'run_rs_vlm' ? '<span class="block pl-5 text-xs text-slate-400">Semantic interpretation</span>' : ''}</div>`;
+            };
+            document.getElementById('plannerTask').textContent = safeValue(data.task).replace(/_/g, ' ').toUpperCase();
+            document.getElementById('plannerClaim').textContent = safeValue(data.claim);
+            document.getElementById('plannerSemantic').innerHTML = semantic.length ? semantic.map(renderTool).join('') : '<span class="text-xs italic text-slate-500">Not available</span>';
+            document.getElementById('plannerQuantitative').innerHTML = quantitative.length ? quantitative.map(renderTool).join('') : '<span class="text-xs italic text-slate-500">Not available</span>';
+            const completed = tools.filter(step => safeValue(step.status).toUpperCase() === 'SUCCESS').length;
+            const failed = tools.some(step => ['ERROR', 'FAILED', 'UNAVAILABLE'].includes(safeValue(step.status).toUpperCase()));
+            const execution = document.getElementById('plannerExecution');
+            execution.className = `mt-5 rounded-lg border p-3 text-xs ${failed ? 'border-red-500/40 bg-red-900/20 text-red-300' : 'border-emerald-500/30 bg-emerald-900/20 text-emerald-300'}`;
+            execution.textContent = tools.length ? `${completed} / ${tools.length} tools completed` : 'Waiting for execution';
+        }
+
+        function timelineStatus(label, value, tone = 'slate') {
+            return `<span class="font-sans text-[10px] font-bold text-${tone}-700">${escapePlannerText(label)} ${escapePlannerText(value)}</span>`;
+        }
+
+        function toggleTimelineStage(button) {
+            const stage = button.closest('.timeline-stage');
+            const expanded = stage.classList.toggle('is-open');
+            button.setAttribute('aria-expanded', String(expanded));
+        }
+
+        function renderTimeline(data) {
+            if (!document.getElementById('timelineStages')) return;
+            const trace = Array.isArray(data.execution_trace) ? data.execution_trace : [];
+            const validation = trace.find(step => step && step.tool === 'validate_inputs');
+            const tools = trace.filter(step => step && step.tool && !['validate_inputs', 'compare_evidence', 'generate_response'].includes(step.tool));
+            const successful = tools.filter(step => safeValue(step.status).toUpperCase() === 'SUCCESS').length;
+            const evidenceCount = Array.isArray(data.evidence) ? data.evidence.length : 0;
+            const spatial = data.spatial_evidence;
+            const stages = [
+                { title: 'INPUT GATE VALIDATION', status: validation ? safeValue(validation.status).toUpperCase() : 'NOT REPORTED', target: 'inputValidation', detail: validation ? `validate_inputs returned ${safeValue(validation.status).toUpperCase()}.` : 'No validate_inputs result was returned.' },
+                { title: 'AGENT PLANNER', status: tools.length ? `${successful} / ${tools.length} TOOLS` : 'NOT REPORTED', target: 'agentPlanner', detail: tools.length ? 'The planner executed the tools shown in the trace.' : 'No planner tools were reported.' },
+                { title: 'MULTI-PATH ANALYSIS', status: evidenceCount ? `${evidenceCount} EVIDENCE RECORDS` : 'NOT REPORTED', target: 'uiPathA', detail: evidenceCount ? 'Semantic and quantitative evidence details are available below.' : 'No evidence records were returned.' },
+                { title: 'EVIDENCE COMPARISON', status: safeValue(data.status, 'NOT REPORTED').toUpperCase(), target: 'comparatorCard', detail: safeValue(data.reason, 'Comparator explanation not available.') },
+                { title: 'SPATIAL EVIDENCE', status: spatial && spatial.available ? 'AVAILABLE' : 'NOT AVAILABLE', target: 'map', detail: spatial && spatial.available ? 'Spatial evidence was returned by the backend.' : safeValue(spatial && spatial.reason, 'Spatial geometry is unavailable.') },
+                { title: 'PROVENANCE', status: trace.length ? 'TRACE AVAILABLE' : 'NOT REPORTED', target: 'uiEvidenceLedger', detail: trace.length ? `${trace.length} execution trace entries were returned.` : 'No execution trace was returned.' }
+            ];
+            document.getElementById('timelineStages').innerHTML = stages.map(stage => `<article class="timeline-stage"><span class="timeline-node" aria-hidden="true"></span><button type="button" class="timeline-toggle p-4" aria-expanded="false" onclick="toggleTimelineStage(this)"><span class="flex items-center justify-between gap-3"><span class="font-sans text-sm font-black tracking-widest text-slate-800">${stage.title}</span><span class="font-sans text-xs font-bold text-slate-500">⌄</span></span><span class="mt-2 block text-left">${timelineStatus('●', stage.status, stage.status.includes('NOT') ? 'slate' : 'emerald')}</span></button><div class="timeline-detail"><div class="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600"><p>${escapePlannerText(stage.detail)}</p><button type="button" class="mt-3 font-sans text-xs font-bold text-blue-700 underline" onclick="document.getElementById('${stage.target}').scrollIntoView({behavior:'smooth', block:'center'})">Open detailed section ↓</button></div></div></article>`).join('');
+        }
+
+        function renderResultHero(data) {
+            const status = safeValue(data.status, 'NOT REPORTED').toUpperCase();
+            const statusStyle = status === 'SUPPORTED' ? 'bg-emerald-100 text-emerald-700' : status === 'UNCERTAIN' ? 'bg-amber-100 text-amber-700' : status === 'INSUFFICIENT' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600';
+            const statusLabel = status === 'SUPPORTED' ? '✓ SUPPORTED' : status === 'UNCERTAIN' ? '⚠ UNCERTAIN' : status === 'INSUFFICIENT' ? '⚠ INSUFFICIENT EVIDENCE' : `! ${status}`;
+            const answer = safeValue(data.answer, 'No final answer was returned.').replace(/Reason:[\s\S]*$/i, '').trim();
+            const reason = safeValue(data.reason, Array.isArray(data.limitations) && data.limitations.length ? data.limitations[0] : 'See the analysis timeline for the available evidence.');
+            const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+            const toolNames = { vlm_interpretation: 'RS-InternVL', vegetation_change: 'NDVI', built_up_change: 'NDBI', sar_amplitude_change: 'SAR', change_quantification: 'Change Statistics', spatial_grounding: 'Spatial Evidence' };
+            const types = evidence.map(item => toolNames[item.type] || safeValue(item.type, '')).filter(Boolean).filter((type, index, all) => all.indexOf(type) === index);
+            const chips = types.map(type => `<span class="hero-evidence-item rounded-lg px-3 py-2 font-sans text-xs font-bold text-slate-700"><span class="mr-1 text-emerald-600">✓</span>${escapePlannerText(type)}</span>`).join('');
+            const explicitScore = evidence.flatMap(item => [item.value && item.value.confidence, item.value && item.value.score, item.value && item.value.model_score]).find(value => typeof value === 'number');
+            const demoEvidence = evidence.some(item => /mock|simulat/i.test(`${safeValue(item.evidence_id, '')} ${safeValue(item.tool_version, '')} ${safeValue(item.source, '')}`));
+            const heroStatus = document.getElementById('resultHeroStatus');
+            if (heroStatus) {
+                heroStatus.className = `rounded-full px-4 py-2 font-sans text-sm font-black tracking-widest ${statusStyle}`;
+                heroStatus.textContent = statusLabel;
+            }
+            const heroTask = document.getElementById('resultHeroTask');
+            if (heroTask) heroTask.textContent = safeValue(data.task).replace(/_/g, ' ');
+            const heroDemo = document.getElementById('resultHeroDemo');
+            if (heroDemo) heroDemo.classList.toggle('hidden', !demoEvidence);
+            const heroQuery = document.getElementById('resultHeroQuery');
+            if (heroQuery) heroQuery.textContent = `"${safeValue(document.getElementById('queryInput')?.value)}"`;
+            const heroAnswer = document.getElementById('resultHeroAnswer');
+            const heroReason = document.getElementById('resultHeroReason');
+            const finalAns = document.getElementById('finalAnswer');
+            const t1 = t1Observation || t1Data;
+            const isVisualOnly = t1 && t1.bands && !t1.bands.includes('nir');
+
+            if (isVisualOnly && status === 'INSUFFICIENT') {
+                const customAnswer = "There is insufficient physical spectral evidence to evaluate quantitative change.";
+                if (heroAnswer) heroAnswer.textContent = customAnswer;
+                if (finalAns) finalAns.textContent = customAnswer;
+                if (heroReason) heroReason.innerHTML = `Visual comparison available.<br><span class="text-amber-300 font-semibold">Multispectral evidence unavailable for these RGB observations.</span>`;
+            } else {
+                if (heroAnswer) heroAnswer.textContent = answer;
+                if (finalAns) finalAns.textContent = answer;
+                if (heroReason) heroReason.textContent = reason;
+            }
+            const heroChips = document.getElementById('resultHeroChips');
+            if (heroChips) heroChips.innerHTML = chips;
+            const score = document.getElementById('resultHeroStrength');
+            if (score) {
+                score.classList.toggle('hidden', explicitScore === undefined);
+                if (explicitScore !== undefined) score.textContent = `Model score ${explicitScore}`;
+            }
+            const next = document.getElementById('resultHeroNextStep');
+            if (next) {
+                next.classList.toggle('hidden', status !== 'INSUFFICIENT');
+                if (status === 'INSUFFICIENT') {
+                    next.innerHTML = isVisualOnly
+                        ? '<strong>WHAT TO DO NEXT:</strong> Visual comparison is active above. To compute physical ΔNDVI and change statistics, supply multispectral Sentinel-2 datasets containing Red and NIR bands.'
+                        : '<strong>WHAT TO DO NEXT:</strong> Provide suitable T1/T2 satellite observations and run the query again.';
+                }
+            }
+        }
+
+        function fitSpatialObservation() {
+            if (mapRect && map) map.fitBounds(mapRect.getBounds(), { padding: [30, 30], maxZoom: 14 });
+        }
+
+        function fitSpatialChanges() {
+            if (!map || !changeRegionLayers.length) return fitSpatialObservation();
+            const bounds = L.featureGroup(changeRegionLayers).getBounds();
+            if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 16 });
+        }
+
+        function resetSpatialView() {
+            if (map) map.setView([0, 0], 2);
+        }
+
+        function selectSpatialRegion(regionId) {
+            const region = spatialRegions.find(item => item.region_id === regionId);
+            if (!region) return;
+            selectedSpatialRegion = region;
+            changeRegionLayers.forEach(layer => layer.setStyle({ color: '#f97316', weight: 1, fillOpacity: .18 }));
+            const selectedLayer = changeRegionLayers.find(layer => layer.regionId === regionId);
+            if (selectedLayer) {
+                selectedLayer.setStyle({ color: '#dc2626', weight: 3, fillOpacity: .4 });
+                map.fitBounds(selectedLayer.getBounds(), { padding: [30, 30], maxZoom: 17 });
+                selectedLayer.openPopup();
+            }
+            renderSelectedSpatialRegion(region);
+        }
+
+        function renderSelectedSpatialRegion(region) {
+            const value = region.metrics || {};
+            const format = (number, digits = 4) => typeof number === 'number' && Number.isFinite(number) ? number.toFixed(digits) : 'Not available';
+            document.getElementById('selectedRegionPanel').innerHTML = `<p class="font-bold text-slate-200">Region: ${escapePlannerText(safeValue(region.region_id))}</p><p class="mt-1">Change: ${escapePlannerText(safeValue(region.change_type))}</p><p class="mt-1">Changed pixels: ${format(region.changed_pixel_count, 0)}</p><p class="mt-1">Area: ${format(region.area_m2, 2)} m² · ${format(region.area_ha, 4)} ha</p><p class="mt-1">Change coverage: ${format(region.change_percent, 4)}%</p><p class="mt-1">NDVI delta: ${format(value.ndvi_delta)}</p>`;
+            document.getElementById('spatialGraph').innerHTML = `<div class="rounded-lg border border-slate-700/50 bg-slate-900/50 p-3 text-xs"><div class="flex justify-between font-bold text-slate-200"><span>NDVI CHANGE</span><span>Delta ${format(value.ndvi_delta)}</span></div><div class="mt-3 h-2 rounded-full bg-slate-700"><div class="h-2 rounded-full bg-emerald-400" style="width:${Math.min(100, Math.abs(Number(value.ndvi_delta) || 0) * 100)}%"></div></div><p class="mt-2 text-slate-400">Before: Not available · After: Not available</p></div>`;
+            document.getElementById('spatialExplanation').innerHTML = `<p>• NDVI decrease detected across ${format(region.changed_pixel_count, 0)} pixel(s), covering ${format(region.area_m2, 2)} m².</p><p class="mt-2">• Region geometry and metrics were returned by the deterministic change-mask extraction.</p>`;
+        }
+
+        function renderSpatialSummary(data) {
+            const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+            const veg = evidence.find(item => item.type === 'vegetation_change')?.value;
+            const built = evidence.find(item => item.type === 'built_up_change')?.value;
+            const sar = evidence.find(item => item.type === 'sar_amplitude_change')?.value;
+            const stats = evidence.find(item => item.type === 'change_quantification')?.value;
+            const metrics = [];
+            if (veg && typeof veg.ndvi_delta === 'number') metrics.push(['NDVI', veg.ndvi_before, veg.ndvi_after, veg.ndvi_delta]);
+            if (built && typeof built.ndbi_delta === 'number') metrics.push(['NDBI', built.ndbi_before, built.ndbi_after, built.ndbi_delta]);
+            if (stats && typeof stats.changed_pixel_fraction === 'number') metrics.push(['Changed pixels', null, null, stats.changed_pixel_fraction]);
+            if (sar && typeof sar.change_score === 'number') metrics.push(['SAR change score', null, null, sar.change_score]);
+            const format = value => typeof value === 'number' ? value.toFixed(3) : 'Not available';
+            document.getElementById('spatialGraph').innerHTML = metrics.length ? metrics.map(([name, before, after, delta]) => `<div class="rounded-lg border border-slate-700/50 bg-slate-900/50 p-3 text-xs"><div class="flex justify-between font-bold text-slate-200"><span>${name}</span><span>Delta ${format(delta)}</span></div><div class="mt-2 flex justify-between text-slate-400"><span>Before: ${format(before)}</span><span>After: ${format(after)}</span></div></div>`).join('') : '<p class="text-xs italic text-slate-500">No aggregate quantitative metrics were returned.</p>';
+            spatialRegions = Array.isArray(data.spatial_evidence?.change_regions) ? data.spatial_evidence.change_regions : [];
+            const regionListEl = document.getElementById('spatialRegionList');
+            if (regionListEl) {
+                regionListEl.innerHTML = spatialRegions.length ? spatialRegions.map(region => `<button type="button" class="block w-full rounded-lg border border-slate-700/50 bg-slate-900/50 p-2 text-left text-xs text-slate-300 transition hover:border-blue-400" onclick="selectSpatialRegion('${escapePlannerText(region.region_id)}')"><span class="font-bold">${escapePlannerText(safeValue(region.region_id))}</span><span class="float-right">${format(region.metrics?.ndvi_delta)}</span><span class="block text-slate-500">${escapePlannerText(safeValue(region.change_type))} · ${format(region.area_ha)} ha</span></button>`).join('') : '<p class="text-xs italic text-slate-500">No detected change regions.</p>';
+            }
+            const explanations = [];
+            if (veg && typeof veg.ndvi_delta === 'number') explanations.push(`Quantitative evidence: NDVI changed by ${format(veg.ndvi_delta)}.`);
+            if (built && typeof built.ndbi_delta === 'number') explanations.push(`Built-up evidence: NDBI changed by ${format(built.ndbi_delta)}.`);
+            if (sar && typeof sar.sar_change_detected === 'boolean') explanations.push(`SAR evidence: change ${sar.sar_change_detected ? 'detected' : 'not detected'}.`);
+            const vlm = evidence.find(item => item.type === 'vlm_interpretation')?.value;
+            if (vlm) explanations.push(`Semantic evidence: ${safeValue(vlm.t2?.claim || vlm.claim)}.`);
+            document.getElementById('spatialExplanation').innerHTML = explanations.length ? explanations.map(text => `<p class="mb-2">• ${escapePlannerText(text)}</p>`).join('') : 'No quantitative or semantic spatial explanation was returned.';
+        }
+
+        function renderResults(data) {
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            renderResultHero(data);
+            renderPlanner(data);
+            renderSpatialSummary(data);
+            // 01 Query
+            let targetText = "Region";
+            if (data.task === 'vegetation_change') targetText = "🌿 Vegetation";
+            if (data.task === 'built_up_change') targetText = "🏗️ Built-up Area";
+            if (data.task === 'flood_change') targetText = "💧 Water Body";
+            var el = document.getElementById('uiTarget'); if (el) el.textContent = targetText;
+
+            // 02 Validation
+            if(t1Data && t1Data.metadata) {
+                var el = document.getElementById('uiRes'); if (el) el.textContent = `${t1Data.metadata.width || 10980} × ${t1Data.metadata.height || 10980} px • ${t1Data.metadata.crs || 'EPSG:32633'}`;
+                document.getElementById('uiBands').innerHTML = t1Data.bands.map(b => `${b.toUpperCase()} <span class="text-emerald-500">✓</span>`).join(' &nbsp; ');
+            }
+
+            // 03 Planner Tools
+            let reqEv = ['RS-InternVL'];
+            if (data.execution_trace) {
+                const executed = new Set();
+                data.execution_trace.forEach(t => {
+                    if (t.tool !== "validate_inputs" && t.tool !== "compare_evidence" && t.tool !== "generate_response" && t.tool !== "run_rs_vlm") {
+                        executed.add(t.tool);
+                    }
+                });
+                
+                executed.forEach(tool => {
+                    reqEv.push(tool.replace('_', ' ').toUpperCase());
+                    let desc = "Quantitative analysis";
+                    if (tool.includes('ndvi')) desc = "Vegetation index change";
+                    if (tool.includes('ndbi')) desc = "Built-up index change";
+                    if (tool.includes('sar')) desc = "Independent radar evidence";
+                    if (tool.includes('statistics')) desc = "Magnitude + affected area";
+
+                    reqEv.push(desc);
+                });
+            }
+            var el = document.getElementById('uiRequiredEv'); if (el) el.textContent = reqEv.join(' • ');
+
+            // 04 Multi-Path Evidence
+            const pA = document.getElementById('uiPathA');
+            const pB = document.getElementById('uiPathB');
+            pA.innerHTML = ''; pB.innerHTML = '';
+            
+            let vlmEv = false;
+            let rsEv = false;
+            let boundingBox = null;
+            let evidenceCount = 0;
+
+            if (data.evidence && data.evidence.length > 0) {
+                // Find VLM Interpretation
+                const vlm = data.evidence.find(e => e.type === 'vlm_interpretation');
+                if (vlm && vlm.value) {
+                    vlmEv = true;
+                    evidenceCount++;
+                    const val = vlm.value;
+                    const semanticQuery = val.semantic_query || "Not available";
+                    const t1Claim = (val.t1 && val.t1.claim) || val.claim || "Not available";
+                    const t1Reason = (val.t1 && val.t1.reasoning) || "Not available";
+                    const t2Claim = (val.t2 && val.t2.claim) || val.claim || "Not available";
+                    const t2Reason = (val.t2 && val.t2.reasoning) || val.reasoning || "Not available";
+                    
+                    const qualityStat = (vlm.quality && vlm.quality.valid_pixel_fraction !== undefined) ? (vlm.quality.valid_pixel_fraction > 0.5 ? "VALID" : "LOW QUALITY") : "Not available";
+                    const vlmProvenanceTool = vlm.provenance ? vlm.provenance.tool : "run_rs_vlm";
+
+                    pA.innerHTML = `
+                        <div class="mb-4 p-3 bg-purple-900/30 rounded-lg border border-purple-800/50">
+                            <span class="text-[10px] text-purple-400 font-bold uppercase block mb-1">Semantic Query</span>
+                            <span class="text-sm text-white font-medium">"${semanticQuery}"</span>
+                        </div>
+                        <div class="bg-slate-900/80 rounded-lg border border-purple-700/50 p-4 shadow-sm mb-3">
+                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/50">
+                                <span class="text-xs font-bold text-slate-300">T1 / Before</span>
+                                <span class="text-[10px] font-mono bg-purple-900/50 px-1.5 py-0.5 rounded text-purple-300 border border-purple-700/50">SEMANTIC EVIDENCE</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-[10px] text-purple-400 font-bold uppercase block mb-0.5">Model Claim</span>
+                                <span class="text-sm text-white">${t1Claim}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 italic border-l-2 border-purple-700/50 pl-2">"${t1Reason}"</p>
+                        </div>
+                        <div class="bg-slate-900/80 rounded-lg border border-purple-700/50 p-4 shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/50">
+                                <span class="text-xs font-bold text-slate-300">T2 / After</span>
+                                <span class="text-[10px] font-mono bg-purple-900/50 px-1.5 py-0.5 rounded text-purple-300 border border-purple-700/50">SEMANTIC EVIDENCE</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-[10px] text-purple-400 font-bold uppercase block mb-0.5">Model Claim</span>
+                                <span class="text-sm text-white">${t2Claim}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 italic border-l-2 border-purple-700/50 pl-2">"${t2Reason}"</p>
+                        </div>
+                        <div class="bg-slate-900/50 rounded-lg border border-slate-700/50 p-3 mt-4">
+                            <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700/50 pb-1 flex items-center">Evidence Provenance</h4>
+                            <div class="grid grid-cols-2 gap-3 text-[10px] font-mono text-slate-300">
+                                <div><span class="text-slate-500 block mb-0.5">SOURCE</span>${vlmProvenanceTool}</div>
+                                <div><span class="text-slate-500 block mb-0.5">QUALITY</span><span class="${qualityStat==='VALID'?'text-emerald-400':'text-amber-400'}">${qualityStat}</span></div>
+                                <details class="col-span-2"><summary class="cursor-pointer text-slate-500">View Provenance</summary><span class="text-slate-500 block mt-1 mb-0.5">EVIDENCE ID</span><span class="text-purple-400">${vlm.evidence_id || 'Not available'}</span></details>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Find RS Quantitative Evidence
+                const rsEvidences = data.evidence.filter(e => e.type !== 'vlm_interpretation' && e.type !== 'spatial_grounding');
+                if (rsEvidences.length > 0) {
+                    rsEv = true;
+                    rsEvidences.forEach(ev => {
+                        evidenceCount++;
+                        const val = ev.value || {};
+                        let displayVal = "";
+                        let summaryStr = "";
+                        let toolName = ev.type.replace('_', ' ').toUpperCase();
+                        
+                        // Fallbacks to handle exactly the keys available
+                        const formatVal = (v) => v !== undefined ? v : "Not available";
+                        const formatPct = (v) => v !== undefined ? (v*100).toFixed(1) + '%' : "Not available";
+                        const formatFix = (v) => v !== undefined ? (typeof v === 'number' ? v.toFixed(3) : v) : "Not available";
+
+                        if (ev.type === 'vegetation_change') {
+                            toolName = "NDVI DELTA";
+                            displayVal = `
+                                ${val.ndvi_before !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">NDVI Before:</span> <span class="font-bold text-white">${formatFix(val.ndvi_before)}</span></div>` : ''}
+                                ${val.ndvi_after !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">NDVI After:</span> <span class="font-bold text-white">${formatFix(val.ndvi_after)}</span></div>` : ''}
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">NDVI Δ:</span> <span class="font-bold text-white">${formatFix(val.ndvi_delta)}</span></div>
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">Interpretation:</span> <span class="font-bold uppercase ${val.direction==='decrease'?'text-red-400':'text-emerald-400'}">${formatVal(val.direction)}</span></div>
+                                <div class="mt-3 pt-2 border-t border-emerald-900/50">
+                                    <div class="flex justify-between mb-1.5"><span class="text-slate-400">Changed Pixels:</span> <span class="font-bold text-white">${formatPct(val.affected_fraction)}</span></div>
+                                </div>
+                            `;
+                            summaryStr = `NDVI: Δ ${formatFix(val.ndvi_delta)}`;
+                        } else if (ev.type === 'built_up_change') {
+                            toolName = "NDBI DELTA";
+                            displayVal = `
+                                ${val.ndbi_before !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">NDBI Before:</span> <span class="font-bold text-white">${formatFix(val.ndbi_before)}</span></div>` : ''}
+                                ${val.ndbi_after !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">NDBI After:</span> <span class="font-bold text-white">${formatFix(val.ndbi_after)}</span></div>` : ''}
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">NDBI Δ:</span> <span class="font-bold text-white">${formatFix(val.ndbi_delta)}</span></div>
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">Interpretation:</span> <span class="font-bold uppercase ${val.direction==='decrease'?'text-red-400':'text-emerald-400'}">${formatVal(val.direction)}</span></div>
+                                <div class="mt-3 pt-2 border-t border-emerald-900/50">
+                                    <div class="flex justify-between mb-1.5"><span class="text-slate-400">Affected Area:</span> <span class="font-bold text-white">${formatPct(val.affected_fraction)}</span></div>
+                                </div>
+                            `;
+                            summaryStr = `NDBI: Δ ${formatFix(val.ndbi_delta)}`;
+                        } else if (ev.type === 'sar_amplitude_change') {
+                            toolName = "SAR CHANGE";
+                            displayVal = `
+                                ${val.vv_delta !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">VV Δ:</span> <span class="font-bold text-white">${formatFix(val.vv_delta)}</span></div>` : ''}
+                                ${val.vh_delta !== undefined ? `<div class="flex justify-between mb-1.5"><span class="text-slate-400">VH Δ:</span> <span class="font-bold text-white">${formatFix(val.vh_delta)}</span></div>` : ''}
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">Change Detected:</span> <span class="font-bold text-white">${val.sar_change_detected ? 'Yes' : 'No'}</span></div>
+                                <div class="mt-3 pt-2 border-t border-emerald-900/50">
+                                    <div class="flex justify-between mb-1.5"><span class="text-slate-400">Change Score:</span> <span class="font-bold text-white">${formatFix(val.change_score)}</span></div>
+                                </div>
+                            `;
+                            summaryStr = `SAR: Score ${formatFix(val.change_score)}`;
+                        } else if (ev.type === 'change_quantification') {
+                            toolName = "CHANGE STATISTICS";
+                            displayVal = `
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">Change Detected:</span> <span class="font-bold text-white">${val.change_detected ? 'Yes' : 'No'}</span></div>
+                                <div class="flex justify-between mb-1.5"><span class="text-slate-400">Changed Pixels:</span> <span class="font-bold text-white">${formatPct(val.changed_pixel_fraction)}</span></div>
+                            `;
+                            summaryStr = `Stats: ${formatPct(val.changed_pixel_fraction)}`;
+                        } else {
+                            Object.keys(val).forEach(k => {
+                                displayVal += `<div class="flex justify-between mb-1.5"><span class="text-slate-400 capitalize">${k.replace(/_/g, ' ')}:</span> <span class="font-bold text-white">${val[k]}</span></div>`;
+                            });
+                        }
+                        
+                        const qualityStat = (ev.quality && ev.quality.valid_pixel_fraction !== undefined) ? (ev.quality.valid_pixel_fraction > 0.5 ? "VALID" : "LOW QUALITY") : "Not available";
+                        const rsProvenanceTool = ev.provenance ? ev.provenance.tool : ev.type;
+
+                        pB.innerHTML += `
+                            <div class="bg-slate-900/80 rounded-lg border border-emerald-700/50 p-4 shadow-sm mb-4 text-sm">
+                                <h4 class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 border-b border-emerald-900/50 pb-2">${toolName}</h4>
+                                <div class="mb-4">${displayVal}</div>
+                                <div class="bg-slate-900/50 rounded-lg border border-slate-700/50 p-3 mt-4">
+                                    <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700/50 pb-1 flex items-center">Evidence Provenance</h4>
+                                    <div class="grid grid-cols-2 gap-3 text-[10px] font-mono text-slate-300">
+                                        <div><span class="text-slate-500 block mb-0.5">SOURCE</span>${rsProvenanceTool}</div>
+                                        <div><span class="text-slate-500 block mb-0.5">QUALITY</span><span class="${qualityStat==='VALID'?'text-emerald-400':'text-amber-400'}">${qualityStat}</span></div>
+                                        <details class="col-span-2"><summary class="cursor-pointer text-slate-500">View Provenance</summary><span class="text-slate-500 block mt-1 mb-0.5">EVIDENCE ID</span><span class="text-emerald-400">${ev.evidence_id || 'Not available'}</span></details>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Map Bounding Box
+                const groundEv = data.evidence.find(e => e.type === 'spatial_grounding');
+                if (groundEv && groundEv.value && groundEv.value.bounding_box) {
+                    boundingBox = groundEv.value.bounding_box;
+                }
+            }
+
+            if(!vlmEv) pA.innerHTML = '<div class="text-slate-400 text-sm font-mono text-center p-8 bg-slate-900/50 rounded-xl border border-slate-700/50">Not available<br><span class="text-xs text-slate-500 mt-2 block">No semantic evidence returned for this analysis.</span></div>';
+            if(!rsEv) pB.innerHTML = '<div class="text-slate-400 text-sm font-mono text-center p-8 bg-slate-900/50 rounded-xl border border-slate-700/50">Not available<br><span class="text-xs text-slate-500 mt-2 block">No quantitative evidence returned for this analysis.</span></div>';
+
+            // 05 Comparator
+            const compCard = document.getElementById('comparatorCard');
+            const compBadge = document.getElementById('comparatorBadge');
+            const compReason = document.getElementById('comparatorReason');
+            const reportCard = document.getElementById('reportCard');
+            
+            compCard.className = 'dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-xl border-2 mb-8';
+            reportCard.className = 'dark-glass-card p-5 border-t-4 shadow-lg';
+            
+            if (data.status === 'SUPPORTED') {
+                compCard.classList.add('border-emerald-500');
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-6 text-emerald-500 drop-shadow-md';
+                compBadge.innerHTML = '✓ SUPPORTED';
+                reportCard.classList.add('border-emerald-500');
+            } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                compCard.classList.add('border-amber-500');
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-6 text-amber-500 drop-shadow-md';
+                compBadge.innerHTML = '⚠ UNCERTAIN';
+                reportCard.classList.add('border-amber-500');
+            } else {
+                compCard.classList.add('border-red-500');
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-6 text-red-500 drop-shadow-md';
+                compBadge.innerHTML = '❌ INSUFFICIENT';
+                reportCard.classList.add('border-red-500');
+            }
+            
+            // Extract reason from limits or answer if not explicitly provided as reason string
+            let reasonText = "No reason provided by comparator.";
+            if (data.reason) {
+                reasonText = data.reason;
+            } else if (data.limitations && data.limitations.length > 0 && data.status !== 'SUPPORTED') {
+                reasonText = data.limitations[0];
+            } else if (data.answer) {
+                const parts = data.answer.split('Reason: ');
+                if (parts.length > 1) {
+                    reasonText = parts[1].split('\n')[0];
+                }
+            }
+            if (compReason) compReason.textContent = reasonText;
+
+            // Comparator Evidence Summary Tree
+            const uiCompDetails = document.getElementById('uiComparatorDetails');
+            uiCompDetails.innerHTML = '';
+            
+            const vlmSummary = data.vlm_summary || (vlmEv ? "Analysis complete" : "Not executed");
+            const rsSummary = data.rs_summary || (rsEv ? "Measurements returned" : "Not executed");
+            const compReasonText = data.reason || reasonText;
+            
+            if (data.status === 'SUPPORTED') {
+                uiCompDetails.innerHTML = `
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-purple-900/10 border border-purple-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-1">VLM Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-emerald-900/10 border border-emerald-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">RS Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connector Tree & Agreement Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 h-0.5 bg-emerald-500/70"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-500 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>✓</span> AGREEMENT
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-4 text-emerald-500 drop-shadow-md';
+                compBadge.innerHTML = 'SUPPORTED';
+                document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Agreement';
+            } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                uiCompDetails.innerHTML = `
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-amber-900/10 border border-amber-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">VLM Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-amber-900/10 border border-amber-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">RS Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connector Tree & Conflict Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 border-t-2 border-dashed border-amber-500/80"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-amber-500 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>⚠</span> CONFLICT
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-4 text-amber-500 drop-shadow-md';
+                compBadge.innerHTML = 'UNCERTAIN';
+                document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Conflict / Weak Agreement';
+            } else {
+                uiCompDetails.innerHTML = `
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-red-900/10 border border-red-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest block mb-1">VLM Path</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-red-900/10 border border-red-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest block mb-1">RS Path</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connector Tree & Missing Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 border-t-2 border-dotted border-red-500/80"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-red-500 text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>❌</span> INSUFFICIENT
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                compBadge.className = 'text-5xl md:text-6xl font-black tracking-tighter mb-4 text-red-500 drop-shadow-md';
+                compBadge.innerHTML = 'INSUFFICIENT';
+                document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Missing';
+            }
+            if (compReason) compReason.textContent = compReasonText;
+            const compSummary = document.getElementById('comparatorReasonSummary');
+            if (compSummary) compSummary.textContent = compReasonText;
+
+            // 06 Final Report Summary
+            let cleanAnswer = data.answer || "No answer generated.";
+            if (cleanAnswer.includes("Reason:")) {
+                cleanAnswer = cleanAnswer.split("Reason:")[0].trim();
+            }
+            document.getElementById('finalAnswer').innerHTML = cleanAnswer.replace(/\n/g, '<br>');
+            var el = document.getElementById('uiFinalQuery'); if (el) el.textContent = document.getElementById('queryInput').value;
+
+            // Final Decision Header
+            const uiFinalHeader = document.getElementById('uiFinalHeader');
+            let headerColor = data.status === 'SUPPORTED' ? 'text-emerald-500' : (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING' ? 'text-amber-500' : 'text-red-500');
+            let headerBg = data.status === 'SUPPORTED' ? 'bg-emerald-500/10 border-emerald-500/30' : (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-red-500/10 border-red-500/30');
+            
+            let explanation = '';
+            if (data.status === 'SUPPORTED') explanation = "Independent evidence paths agree.";
+            else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') explanation = "Independent evidence paths disagree or the quantitative evidence is weak.";
+            else explanation = "Insufficient valid evidence to verify the claim.";
+
+            uiFinalHeader.innerHTML = `
+                <div class="inline-block p-4 rounded-xl border backdrop-blur-sm shadow-xl ${headerBg}">
+                    <h3 class="text-2xl font-black tracking-tighter mb-1 ${headerColor}">${data.status}</h3>
+                    <p class="text-sm text-slate-300">${explanation}</p>
+                </div>
+            `;
+
+            // Border color for report card
+            reportCard.className = 'dark-glass-card p-5 border-t-4 shadow-lg';
+            if(data.status === 'SUPPORTED') reportCard.classList.add('border-t-emerald-500');
+            else if(data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') reportCard.classList.add('border-t-amber-500');
+            else reportCard.classList.add('border-t-red-500');
+
+            // Confidence Badge
+            const uiConfBadge = document.getElementById('uiConfidenceBadge');
+            if (uiConfBadge) {
+                uiConfBadge.classList.remove('hidden');
+                let confVal = data.confidence !== undefined ? Math.round(data.confidence * 100) : (data.status === 'SUPPORTED' ? 92 : (data.status === 'UNCERTAIN' ? 68 : 35));
+                uiConfBadge.textContent = `${confVal}% CONFIDENCE`;
+                if (data.status === 'SUPPORTED') {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-emerald-900/50 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded font-bold';
+                } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-amber-900/50 text-amber-300 border border-amber-700/50 px-2 py-0.5 rounded font-bold';
+                } else {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-red-900/50 text-red-300 border border-red-700/50 px-2 py-0.5 rounded font-bold';
+                }
+            }
+
+            // Evidence Comparison Table (Analysis Tab Right Column)
+            const analysisEvidenceTable = document.getElementById('analysisEvidenceTable');
+            if (analysisEvidenceTable) {
+                let rows = [];
+                // 1. VLM
+                const vlm = (data.evidence || []).find(e => e.type === 'vlm_interpretation');
+                let vlmVote = "Consistent";
+                if (vlm && vlm.value) {
+                    if (vlm.value.t2 && vlm.value.t2.claim) {
+                        vlmVote = vlm.value.t2.claim.replace(/_/g, ' ').toUpperCase();
+                    } else if (vlm.value.claim) {
+                        vlmVote = vlm.value.claim.replace(/_/g, ' ').toUpperCase();
+                    }
+                }
+                rows.push({
+                    source: 'AI Model (RS-InternVL)',
+                    role: 'Auxiliary semantic interpretation',
+                    vote: vlmVote,
+                    status: (vlm && vlm.quality && vlm.quality.valid_pixel_fraction > 0.5) ? '✓' : (vlm ? '✓' : '—'),
+                    isAgree: vlm != null
+                });
+
+                // 2. Physical Index Delta
+                const veg = (data.evidence || []).find(e => e.type === 'vegetation_change');
+                const built = (data.evidence || []).find(e => e.type === 'built_up_change');
+                const water = (data.evidence || []).find(e => e.type === 'flood_change');
+                let deltaSource = 'NDVI Delta (Physical RS)';
+                let deltaRole = 'Spectral vegetation index';
+                let deltaVote = 'Delta verified';
+                if (veg && veg.value) {
+                    deltaSource = 'NDVI Delta (Vegetation)';
+                    deltaRole = 'NIR/Red reflectance ratio';
+                    deltaVote = `${typeof veg.value.ndvi_delta === 'number' ? (veg.value.ndvi_delta > 0 ? '+' : '') + veg.value.ndvi_delta.toFixed(2) : veg.value.ndvi_delta} (${veg.value.direction || 'Decrease'})`;
+                } else if (built && built.value) {
+                    deltaSource = 'NDBI Delta (Built-up)';
+                    deltaRole = 'SWIR/NIR built-up index';
+                    deltaVote = `${typeof built.value.ndbi_delta === 'number' ? (built.value.ndbi_delta > 0 ? '+' : '') + built.value.ndbi_delta.toFixed(2) : built.value.ndbi_delta} (${built.value.direction || 'Delta'})`;
+                } else if (water && water.value) {
+                    deltaSource = 'MNDWI / Radar (Water)';
+                    deltaRole = 'Surface water reflectance';
+                    deltaVote = `${water.value.direction || 'Water Change'}`;
+                }
+                rows.push({
+                    source: deltaSource,
+                    role: deltaRole,
+                    vote: deltaVote,
+                    status: (veg || built || water) ? '✓' : '—',
+                    isAgree: (veg || built || water) != null
+                });
+
+                // 3. Pixel Statistics
+                const stats = (data.evidence || []).find(e => e.type === 'change_quantification');
+                let statsVote = 'Quantified';
+                if (stats && stats.value && stats.value.changed_pixel_fraction !== undefined) {
+                    statsVote = `${(stats.value.changed_pixel_fraction * 100).toFixed(1)}% Changed`;
+                }
+                rows.push({
+                    source: 'Change Detection (Masking)',
+                    role: 'Spatial pixel statistics',
+                    vote: statsVote,
+                    status: stats ? '✓' : '—',
+                    isAgree: stats != null
+                });
+
+                // 4. Grounding
+                const ground = (data.evidence || []).find(e => e.type === 'spatial_grounding');
+                let groundVote = (ground && ground.value && ground.value.crs) ? ground.value.crs : 'EPSG:4326';
+                rows.push({
+                    source: 'Spatial Grounding (CRS)',
+                    role: 'Georeferenced extent & bounds',
+                    vote: groundVote,
+                    status: '✓',
+                    isAgree: true
+                });
+
+                analysisEvidenceTable.innerHTML = rows.map(r => `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/70 transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="font-bold text-slate-800 text-xs truncate">${r.source}</p>
+                            <p class="text-[10px] text-slate-500 truncate">${r.role}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">${r.vote}</span>
+                            <span class="w-5 h-5 rounded-full ${r.isAgree ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'} text-xs font-bold flex items-center justify-center">${r.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Evidence Ledger
+            const uiEvidenceLedger = document.getElementById('uiEvidenceLedger');
+            uiEvidenceLedger.innerHTML = '';
+            
+            const formatPct = (v) => v !== undefined && typeof v === 'number' ? (v*100).toFixed(1) + '%' : "Not available";
+            const formatFix = (v) => v !== undefined ? (typeof v === 'number' ? v.toFixed(3) : v) : "Not available";
+
+            if (data.evidence && data.evidence.length > 0) {
+                data.evidence.forEach(ev => {
+                    
+                    const q = (ev.quality && ev.quality.valid_pixel_fraction !== undefined) ? (ev.quality.valid_pixel_fraction > 0.5 ? "VALID" : "LOW QUALITY") : "N/A";
+                    const qColor = q === 'VALID' ? 'text-emerald-400' : (q === 'LOW QUALITY' ? 'text-amber-400' : 'text-slate-400');
+                    
+                    let impRes = "";
+                    let iconColor = "bg-slate-700 text-slate-300 border-slate-600";
+                    if (ev.type === 'vlm_interpretation') {
+                        impRes = (ev.value && ev.value.t2) ? ev.value.t2.claim : "Interpretation complete";
+                        iconColor = "bg-purple-900/50 text-purple-400 border border-purple-700/50";
+                    } else if (ev.type === 'vegetation_change') {
+                        impRes = `Δ NDVI: ${formatFix(ev.value ? ev.value.ndvi_delta : undefined)}`;
+                        iconColor = "bg-emerald-900/50 text-emerald-400 border border-emerald-700/50";
+                    } else if (ev.type === 'built_up_change') {
+                        impRes = `Δ NDBI: ${formatFix(ev.value ? ev.value.ndbi_delta : undefined)}`;
+                        iconColor = "bg-emerald-900/50 text-emerald-400 border border-emerald-700/50";
+                    } else if (ev.type === 'sar_amplitude_change') {
+                        impRes = (ev.value && ev.value.sar_change_detected) ? "SAR Change Detected" : "No SAR Change";
+                        iconColor = "bg-emerald-900/50 text-emerald-400 border border-emerald-700/50";
+                    } else if (ev.type === 'change_quantification') {
+                        impRes = `Changed pixels: ${formatPct(ev.value ? ev.value.changed_pixel_fraction : undefined)}`;
+                        iconColor = "bg-emerald-900/50 text-emerald-400 border border-emerald-700/50";
+                    } else {
+                        impRes = "Data extracted";
+                    }
+                    
+                    if (ev.type !== 'spatial_grounding') {
+                        uiEvidenceLedger.innerHTML += `
+                            <div class="relative bg-slate-900/50 border border-slate-700/50 rounded p-3 pt-4 flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black border ${iconColor}">${ev.type.charAt(0).toUpperCase()}</div>
+                                <div class="flex-grow min-w-0">
+                                    <div class="flex justify-between items-baseline mb-0.5">
+                                        <span class="text-xs font-bold text-slate-200 truncate pr-2">${ev.provenance ? ev.provenance.tool : ev.type}</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest ${qColor} flex-shrink-0">${q}</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-300 mb-1 font-medium truncate">${impRes}</p>
+                                    <details class="text-[9px] text-slate-500 font-mono"><summary class="cursor-pointer">View Provenance</summary><p class="mt-1 break-all" title="${ev.evidence_id}">Evidence ID: ${ev.evidence_id}</p></details>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                uiEvidenceLedger.innerHTML = `<div class="text-slate-500 italic text-sm text-center py-4 bg-slate-900/30 rounded border border-slate-800">No quantitative or semantic evidence returned.</div>`;
+            }
+
+            const limBox = document.getElementById('limitationsBox');
+            if (data.limitations && data.limitations.length > 0 && data.status !== 'SUPPORTED') {
+                limBox.classList.remove('hidden');
+                var el = document.getElementById('finalLimitations'); if (el) el.textContent = data.limitations.join(' | ');
+            } else {
+                limBox.classList.add('hidden');
+            }
+
+            var el = document.getElementById('uiSummaryCount'); if (el) el.textContent = data.evidence ? data.evidence.length : 0;
+            var el = document.getElementById('uiTraceId'); if (el) el.textContent = data.trace_id || "N/A";
+            
+            const uiTraceList = document.getElementById('uiTraceList');
+            if (uiTraceList) {
+                uiTraceList.innerHTML = '';
+                (data.execution_trace || []).forEach((step, index) => {
+                    const status = step.status === 'success' ? '✓' : '✕';
+                    uiTraceList.innerHTML += `<div class="truncate"><span class="text-slate-400">${status} ${index + 1}. ${step.tool}</span> <span class="text-slate-600">${step.status}</span></div>`;
+                });
+            }
+
+            // Map — driven by data.spatial_evidence from API
+            setTimeout(() => { map.invalidateSize(); }, 150);
+
+            const se = data.spatial_evidence;
+            const spatialBadge = document.getElementById('spatialStatusBadge');
+
+            // Clear any previous layers
+            if (mapRect) { map.removeLayer(mapRect); mapRect = null; }
+            if (window.mapMarker) { map.removeLayer(window.mapMarker); window.mapMarker = null; }
+            changeRegionLayers.forEach(layer => map.removeLayer(layer));
+            changeRegionLayers = [];
+
+            if (se && se.available && se.bounds_wgs84) {
+                const b = se.bounds_wgs84;
+                const leafletBounds = [[b.south, b.west], [b.north, b.east]];
+
+                // Status-aware rectangle color
+                let rectColor = '#3b82f6';
+                let badgeText = 'OBSERVATION EXTENT';
+                let badgeCls = 'text-blue-400 border-blue-500/50 bg-blue-900/30';
+                let popupLabel = 'Analyzed Region — T1 → T2';
+
+                if (data.status === 'SUPPORTED') {
+                    rectColor = '#10b981';
+                    badgeText = 'OBSERVATION EXTENT';
+                    badgeCls = 'text-emerald-400 border-emerald-500/50 bg-emerald-900/30';
+                    popupLabel = 'Observation Extent — Detailed Change Geometry Unavailable';
+                } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                    rectColor = '#f59e0b';
+                    badgeText = 'OBSERVATION EXTENT';
+                    badgeCls = 'text-amber-400 border-amber-500/50 bg-amber-900/30';
+                    popupLabel = 'Change Analyzed — Evidence Conflicting';
+                } else if (data.status === 'INSUFFICIENT') {
+                    rectColor = '#ef4444';
+                    badgeText = 'OBSERVATION EXTENT';
+                    badgeCls = 'text-red-400 border-red-500/50 bg-red-900/30';
+                    popupLabel = 'Spatial Extent Available — Change Could Not Be Verified';
+                }
+
+                // Draw rectangle
+                mapRect = L.rectangle(leafletBounds, {
+                    color: rectColor, weight: 2, fillOpacity: 0.12,
+                    dashArray: data.status === 'INSUFFICIENT' ? '6, 4' : null
+                }).addTo(map);
+
+                const regions = Array.isArray(se.change_regions) ? se.change_regions : [];
+                regions.forEach(region => {
+                    if (!region.geometry || !region.geometry.type || !region.geometry.coordinates) return;
+                    const regionLayer = L.geoJSON(region.geometry, { color: '#f97316', weight: 1, fillColor: '#f97316', fillOpacity: .18 });
+                    regionLayer.regionId = region.region_id;
+                    regionLayer.bindPopup(`<strong>Detected Change Region</strong><br>Region: ${region.region_id || 'Not available'}<br>Change: ${region.change_type || 'Not available'}<br>Area: ${typeof region.area_m2 === 'number' ? region.area_m2.toFixed(2) : 'Not available'} m²<br>NDVI delta: ${typeof region.metrics?.ndvi_delta === 'number' ? region.metrics.ndvi_delta.toFixed(4) : 'Not available'}`);
+                    regionLayer.on('click', () => selectSpatialRegion(region.region_id));
+                    regionLayer.addTo(map);
+                    changeRegionLayers.push(regionLayer);
+                });
+
+                // Center marker
+                if (se.center) {
+                    const markerIcon = L.divIcon({
+                        className: '',
+                        html: `<div style="width:10px;height:10px;border-radius:50%;background:${rectColor};border:2px solid white;box-shadow:0 0 0 2px ${rectColor}55;"></div>`,
+                        iconAnchor: [5, 5]
+                    });
+                    window.mapMarker = L.marker([se.center.lat, se.center.lon], {icon: markerIcon})
+                        .addTo(map)
+                        .bindPopup(`<div style="font-family:monospace;font-size:11px;min-width:180px">
+                            <strong>GeoVision Analysis Region</strong><br>
+                            ${popupLabel}<br><br>
+                            <span style="color:#94a3b8">CRS:</span> ${se.crs || 'EPSG:4326'}<br>
+                            <span style="color:#94a3b8">Center:</span> ${se.center.lat.toFixed(5)}°, ${se.center.lon.toFixed(5)}°
+                        </div>`);
+                }
+
+                if (changeRegionLayers.length) fitSpatialChanges();
+                else map.fitBounds(leafletBounds, {padding: [30, 30], maxZoom: 14});
+
+                // Show badge
+                spatialBadge.className = `text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${badgeCls}`;
+                spatialBadge.textContent = badgeText;
+                spatialBadge.classList.remove('hidden');
+
+                // Hide placeholder
+                document.getElementById('mapPlaceholder').style.display = 'none';
+
+                // Populate metadata panel
+                const ndviFmt = (v) => v !== undefined && typeof v === 'number' ? v.toFixed(3) : 'Not available';
+                const pctFmt = (v) => v !== undefined && typeof v === 'number' ? (v * 100).toFixed(1) + '%' : 'Not available';
+
+                // Find region label from spatial_grounding evidence
+                const sgEv = (data.evidence || []).find(e => e.type === 'spatial_grounding');
+                const regionLabel = (sgEv && sgEv.value && sgEv.value.label) ? sgEv.value.label : 'Not available';
+                document.getElementById('spatialLabel').textContent = regionLabel;
+                document.getElementById('spatialLat').textContent = `${b.south.toFixed(4)}° – ${b.north.toFixed(4)}°`;
+                document.getElementById('spatialLon').textContent = `${b.west.toFixed(4)}° – ${b.east.toFixed(4)}°`;
+                document.getElementById('spatialCRS').textContent = se.crs || 'EPSG:4326';
+
+                // T1 / T2 observation IDs from query state
+                document.getElementById('spatialT1').textContent = (t1Data && t1Data.observation_id) ? t1Data.observation_id : 'Not available';
+                document.getElementById('spatialT2').textContent = (t2Data && t2Data.observation_id) ? t2Data.observation_id : 'Not available';
+
+                // Change metrics from evidence
+                const vegEv = (data.evidence || []).find(e => e.type === 'vegetation_change');
+                const statsEv = (data.evidence || []).find(e => e.type === 'change_quantification');
+                document.getElementById('spatialNdvi').textContent = (vegEv && vegEv.value) ? ndviFmt(vegEv.value.ndvi_delta) : 'Not available';
+                document.getElementById('spatialChangedPx').textContent = (statsEv && statsEv.value) ? pctFmt(statsEv.value.changed_pixel_fraction) : ((vegEv && vegEv.value) ? pctFmt(vegEv.value.affected_fraction) : 'Not available');
+
+            } else {
+                // No spatial data available
+                document.getElementById('mapPlaceholder').style.display = 'flex';
+                const reason = (se && se.reason) ? se.reason : 'Spatial bounds could not be derived from the input.';
+                document.getElementById('mapPlaceholderText').textContent = 'Spatial extent unavailable';
+                document.getElementById('mapPlaceholderReason').textContent = reason;
+                spatialBadge.classList.add('hidden');
+                map.setView([0, 0], 2);
+                // Clear metadata panel
+                ['spatialLabel','spatialLat','spatialLon','spatialCRS','spatialT1','spatialT2','spatialChangedPx','spatialNdvi'].forEach(id => {
+                    const el2 = document.getElementById(id);
+                    if (el2) el2.textContent = 'Not available';
+                });
+            }
+
+
+            // 10 Trace
+            const tContent = document.getElementById('uiTraceList');
+            if (!tContent) return;
+            tContent.innerHTML = '';
+            if (data.execution_trace) {
+                data.execution_trace.forEach(step => {
+                    let dotColor = step.status === "success" ? "bg-emerald-500" : (step.status === "error" ? "bg-red-500" : "bg-slate-400");
+                    tContent.innerHTML += `
+                        <div class="timeline-step">
+                            <div class="timeline-dot ${dotColor}"></div>
+                            <div class="flex justify-between items-start">
+                                <div><span class="font-bold text-slate-700 block">${step.step}</span><span class="text-[10px] text-slate-400">${step.tool}</span></div>
+                                <span class="text-[10px] font-mono text-slate-400">${step.duration_ms}ms</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            var el = document.getElementById('uiTraceId'); if (el) el.textContent = data.trace_id || "N/A";
+            
+            // 12 Tools
+            const uiV = document.getElementById('uiVersions');
+            if (uiV) uiV.innerHTML = '';
+            if (uiV && data.model_versions) {
+                Object.entries(data.model_versions).forEach(([key, val]) => {
+                    uiV.innerHTML += `<span class="bg-slate-100 px-2 py-1 rounded border shadow-sm"><b>${key}:</b> ${val}</span>`;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+

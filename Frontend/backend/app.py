@@ -11,6 +11,7 @@ from typing import Optional
 from datetime import datetime
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 
@@ -60,6 +61,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+DIST_DATA_DIR = Path(__file__).parents[2] / "frontend-ui" / "dist" / "data"
+if DIST_DATA_DIR.exists():
+    app.mount("/data", StaticFiles(directory=DIST_DATA_DIR), name="data")
 
 
 # ---------------------------------------------------------------------------
@@ -340,13 +345,39 @@ async def get_evidence():
     summary_file = SAMPLE_DIR / "evidence_summary.json"
 
     if not record_file.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                "Demo evidence record not found. "
-                "Run restore_demo_data.py to regenerate it."
-            )
-        )
+        geojson_file = DIST_DATA_DIR / "change_regions_2017_2018.geojson"
+        if not geojson_file.exists():
+            raise HTTPException(status_code=404, detail="Demo evidence data not found.")
+
+        with open(geojson_file) as f:
+            features = json.load(f).get("features", [])
+        score_counts = {}
+        valid_pixels = 0
+        strong_regions = []
+        for feature in features:
+            properties = feature.get("properties", {})
+            score = int(properties.get("evidence_score", 0))
+            pixels = int(properties.get("pixels", 0))
+            score_counts[str(score)] = score_counts.get(str(score), 0) + pixels
+            valid_pixels += pixels
+            if score >= 3:
+                strong_regions.append(properties)
+
+        return {
+            "period": {"before": BEFORE_YEAR, "after": AFTER_YEAR},
+            "regions": {
+                "total": len(features),
+                "strong_evidence_regions": strong_regions,
+            },
+            "evidence": {"score_counts": score_counts, "valid_pixels": valid_pixels},
+            "classification": {
+                "strong": sum(
+                    value for score, value in score_counts.items() if int(score) >= 3
+                ),
+                "uncertain": 0,
+                "other": 0,
+            },
+        }
 
     with open(record_file) as f:
         record = json.load(f)

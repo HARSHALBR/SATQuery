@@ -1,0 +1,70 @@
+dataset:
+  data_root: data/bigearthnet_txt
+  img_size: 120
+  s1_bands:
+  - VV
+  - VH
+  s2_bands:
+  - B02
+  - B03
+  - B04
+  - B05
+  - B06
+  - B07
+  - B08
+  - B8A
+  - B11
+  - B12
+  seed: 42
+  train_manifest: data/manifests/manifest_train.jsonl
+  train_samples: 32
+  validation_manifest: data/manifests/manifest_validation.jsonl
+  validation_samples: 8
+evaluation:
+  evaluate_binary_presence: true
+  evaluate_exact_match: true
+  evaluate_mcq: true
+  normalize_text: true
+generation:
+  do_sample: false
+  max_new_tokens: 32
+lora:
+  alpha: 32
+  bias: none
+  dropout: 0.1
+  enabled: true
+  r: 8
+  target_modules:
+  - q_proj
+  - v_proj
+model:
+  backbone: OpenGVLab/InternVL3-1B
+  config_file: configs/model/internvl3_1b_config.json
+  freeze_llm: true
+  freeze_s1_encoder: false
+  freeze_s2_encoder: false
+  img_size: 120
+  pretrained_backbone: true
+  projection_dropout: 0.0
+  projection_hidden_dim: 1024
+  s1_channels: 2
+  s1_hidden_dim: 512
+  s2_channels: 10
+  s2_hidden_dim: 768
+output:
+  checkpoint_dir: checkpoints/pretrained_lora
+  output_dir: outputs/pretrained_lora
+  save_best_only: true
+training:
+  batch_size: 1
+  epochs: 1
+  eval_epochs:
+  - 0
+  - 1
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0001
+  lr_scheduler: cosine
+  max_grad_norm: 1.0
+  seed: 42
+  warmup_steps: 8
+  weight_decay: 0.01
