@@ -1,4 +1,4 @@
-"""Response-related schemas for SATQuery AI.
+"""Response-related schemas for GeoVision.
 
 Defines the evidence status, comparison result, and the final response
 returned to the user.

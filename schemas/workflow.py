@@ -1,4 +1,4 @@
-"""Workflow planning schemas for SATQuery AI.
+"""Workflow planning schemas for GeoVision.
 
 Defines the WorkflowStep, WorkflowPlan, and WorkflowStatus used by
 the constrained planner and the execution engine.

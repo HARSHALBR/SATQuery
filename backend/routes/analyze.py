@@ -1,11 +1,11 @@
-"""Analyze endpoint for SATQuery AI."""
+"""Analyze endpoint for GeoVision."""
 
 import os
 from fastapi import APIRouter, HTTPException
 from schemas.query import QueryInput
 from schemas.response import FinalResponse
 from agents.mock_tools import MockScenario
-from backend.services.orchestrator import SATQueryOrchestrator
+from backend.services.orchestrator import GeoVisionOrchestrator
 from agents.real_runner import RealToolRunner
 
 router = APIRouter()
@@ -31,16 +31,19 @@ def analyze_query(query: QueryInput):
             pass
 
     # Check execution mode configuration
-    # If a dev_scenario is explicitly specified, always use MockToolRunner for backward compatibility
+    # If a dev_scenario is explicitly specified, use MockToolRunner for backward compatibility
     has_dev_scenario = bool(query.metadata and query.metadata.get("dev_scenario"))
+    has_uploaded_obs = any("demo_uploads" in (obs.image_path or "") for obs in query.observations)
     mock_rs = os.getenv("MOCK_RS_TOOLS", "false").lower() == "true"
-    if mock_rs or has_dev_scenario:
+    
+    # Explicitly uploaded observations must ALWAYS use RealToolRunner
+    if has_dev_scenario or (mock_rs and not has_uploaded_obs):
         runner = None
     else:
         runner = RealToolRunner(observations=query.observations, query_text=query.query)
 
     # Instantiate orchestrator for request isolation
-    orchestrator = SATQueryOrchestrator(scenario=scenario, runner=runner)
+    orchestrator = GeoVisionOrchestrator(scenario=scenario, runner=runner)
     
     try:
         response = orchestrator.analyze(query)

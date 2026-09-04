@@ -1,4 +1,4 @@
-"""RS-InternVL client adapter for SATQuery AI."""
+"""RS-InternVL client adapter for GeoVision."""
 
 from pathlib import Path
 from typing import List, Optional
@@ -155,7 +155,7 @@ class RSInternVLClient(VLMClient):
 
     @staticmethod
     def _to_vlm_result(prediction: dict) -> VLMResult:
-        """Convert RS-InternVL structured output into SATQuery VLMResult."""
+        """Convert RS-InternVL structured output into GeoVision VLMResult."""
 
         claim_value = prediction.get("claim_type") or prediction.get("claim")
 

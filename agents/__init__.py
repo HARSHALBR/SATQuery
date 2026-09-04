@@ -1,1 +1,1 @@
-"""SATQuery AI — Agent components: planner, router, registry, execution engine."""
+"""GeoVision — Agent components: planner, router, registry, execution engine."""

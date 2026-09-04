@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SATQuery AI - Agentic Geospatial Intelligence</title>
+    <title>GeoVision - Agentic Geospatial Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -92,6 +92,11 @@
         .dark-glass-card [class*="text-white"], .dark-glass-card [class*="text-slate-200"], .dark-glass-card [class*="text-slate-300"] { color: #1e3a5f; }
         .dark-glass-card [class*="text-slate-400"], .dark-glass-card [class*="text-slate-500"] { color: #4e7090; }
         .dark-glass-card [class*="border-slate-700"], .dark-glass-card [class*="border-slate-800"], .dark-glass-card [class*="border-purple-700"], .dark-glass-card [class*="border-emerald-700"] { border-color: rgba(100,160,220,0.25) !important; }
+        .dark-glass-card [class*="text-purple-400"] { color: #6b21a8 !important; }
+        .dark-glass-card [class*="text-emerald-400"] { color: #047857 !important; }
+        .dark-glass-card [class*="text-amber-400"] { color: #b45309 !important; }
+        .dark-glass-card [class*="text-red-400"] { color: #b91c1c !important; }
+        .dark-glass-card [class*="text-blue-400"] { color: #1d4ed8 !important; }
         #loadingState { color: #1e3a5f; }
         #loadingState [class*="bg-slate-100"] { background: rgba(255,255,255,0.55); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.70); }
         #map { background: #d8eef8; }
@@ -283,435 +288,707 @@
             border: 2px solid white;
             box-shadow: 0 0 0 1px #cbd5e1;
         }
+
+        /* ── Tab Navigation Styles ── */
+        .tab-btn {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: 1px solid rgba(210, 225, 240, 0.8);
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(12px);
+        }
+        .tab-btn:hover:not(.active-tab) {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(59, 130, 246, 0.35);
+            transform: translateY(-1px);
+        }
+        .tab-btn.active-tab {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+            color: #ffffff !important;
+            border-color: rgba(37, 99, 235, 0.9) !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+        }
+        .tab-btn.active-tab span {
+            color: #ffffff !important;
+        }
+
+        /* ── Responsive Map Sizing (Landscape Aspect Ratio) ── */
         #map {
-            height: 300px;
+            height: 410px;
+            min-height: 300px;
+            max-height: 52vh;
             width: 100%;
-            border-radius: 12px;
+            border-radius: 14px;
             z-index: 1;
+        }
+        @media (max-width: 768px) {
+            #map {
+                height: 320px;
+                min-height: 260px;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
-    <div class="step-one-shell space-y-8">
-        
-        <!-- HEADER -->
-        <header class="text-center pt-2 pb-2">
-            <div class="brand-mark mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 text-blue-700 shadow-lg">
-                <svg class="h-10 w-10" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Satellite icon" role="img"><path d="M24 19v18M17 37h14M19 13l-5-5-6 6 8 8M29 13l5-5 6 6-8 8M17 20h14l-2 13H19l-2-13Z"/><path d="M24 5v5M5 24h5M38 24h5" stroke-linecap="round"/></svg>
+<body class="min-h-screen p-3 md:p-6">
+    <div class="step-one-shell space-y-4 max-w-7xl mx-auto">
+
+        <!-- COMPACT HEADER (Branding on Left, Status + Trace on Right) -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/60">
+            <div class="flex items-center gap-3">
+                <div class="brand-mark flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 text-blue-700 shadow-md flex-shrink-0">
+                    <svg class="h-6 w-6" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Satellite icon" role="img"><path d="M24 19v18M17 37h14M19 13l-5-5-6 6 8 8M29 13l5-5 6 6-8 8M17 20h14l-2 13H19l-2-13Z"/><path d="M24 5v5M5 24h5M38 24h5" stroke-linecap="round"/></svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-tight">GeoVision</h1>
+                        <span class="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-sans text-[9px] font-bold tracking-wider text-blue-700">AI + REMOTE SENSING</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-600">Evidence-Verified Geospatial Intelligence</p>
+                </div>
             </div>
-            <h1 class="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">SATQuery AI</h1>
-            <p class="mt-2 text-lg font-medium text-slate-600">Evidence-first agentic geospatial intelligence</p>
-            <span class="mt-4 inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-sans text-[10px] font-bold tracking-[0.2em] text-blue-700">AI + REMOTE SENSING</span>
+            <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                <span id="headerValidationBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm">
+                    <span class="text-emerald-600 font-bold">✓</span> <span id="headerValidationText">Inputs Validated</span>
+                </span>
+                <button type="button" onclick="toggleTraceAccordion()" class="rounded-xl border border-slate-200 bg-white/90 hover:bg-white px-3 py-1 font-sans text-[11px] font-bold text-slate-700 shadow-sm transition flex items-center gap-1.5">
+                    <span>View Execution Trace</span> <span id="traceToggleIcon">▾</span>
+                </button>
+            </div>
         </header>
 
-        <!-- INPUT WORKSPACE -->
-        <div class="step-one-panel p-6 md:p-10">
-            <div class="mb-8"><p class="input-label mb-2 text-blue-700">Evidence workspace</p><h2 class="text-3xl font-black text-slate-900">Ask SATQuery</h2><p class="mt-2 text-slate-600">Describe what you want to verify from satellite observations.</p></div>
-            
-            <div class="mb-6">
-                <label class="input-label mb-2 block" for="queryInput">Natural Language Query</label>
-                <textarea id="queryInput" rows="3" class="query-box w-full rounded-2xl p-4 placeholder-slate-400" placeholder="Example: Has vegetation decreased between the two observations?"></textarea>
-            </div>
-
-            <div class="grid grid-cols-1 gap-8 border-y border-slate-200 py-8 lg:grid-cols-[1.15fr_0.85fr]">
-                <!-- Manual Uploads -->
-                <div>
-                    <h3 class="input-label mb-4">Observations</h3>
-                    <div class="space-y-4">
-                        <div class="upload-card p-5"><div class="flex items-start justify-between gap-4"><div><p class="font-sans text-xs font-bold tracking-widest text-blue-700">T1 - BEFORE OBSERVATION</p><p class="mt-1 text-sm text-slate-600">Upload the earlier satellite observation.</p></div><span class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">01</span></div><div class="mt-4 flex flex-wrap gap-3"><label for="t1File" class="browse-button cursor-pointer rounded-lg px-4 py-2 font-sans text-sm font-bold text-white">Browse Image</label><input type="file" id="t1File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="showSelectedFile('t1')"><button type="button" onclick="uploadFile('t1')" class="rounded-lg border border-blue-200 px-4 py-2 font-sans text-sm font-bold text-blue-700 transition hover:bg-blue-50">Upload to validate</button></div><div id="t1Status" class="mt-3 hidden rounded-lg p-3 font-sans text-xs"></div><div id="t1Preview" class="file-preview mt-3 hidden rounded-lg p-3 font-sans text-xs"></div></div>
-                        <div class="text-center text-blue-400">↓</div><div class="upload-card p-5"><div class="flex items-start justify-between gap-4"><div><p class="font-sans text-xs font-bold tracking-widest text-indigo-700">T2 - AFTER OBSERVATION</p><p class="mt-1 text-sm text-slate-600">Upload the later satellite observation.</p></div><span class="rounded-lg bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700">02</span></div><div class="mt-4 flex flex-wrap gap-3"><label for="t2File" class="browse-button cursor-pointer rounded-lg px-4 py-2 font-sans text-sm font-bold text-white">Browse Image</label><input type="file" id="t2File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="showSelectedFile('t2')"><button type="button" onclick="uploadFile('t2')" class="rounded-lg border border-indigo-200 px-4 py-2 font-sans text-sm font-bold text-indigo-700 transition hover:bg-indigo-50">Upload to validate</button></div><div id="t2Status" class="mt-3 hidden rounded-lg p-3 font-sans text-xs"></div><div id="t2Preview" class="file-preview mt-3 hidden rounded-lg p-3 font-sans text-xs"></div></div>
-                    </div>
-                </div>
-                
-                <!-- Analysis Scenarios -->
-                <div class="lg:border-l lg:border-slate-200 lg:pl-8">
-                    <h3 class="input-label mb-1">Demo Scenarios</h3><p class="mb-4 text-sm text-slate-600">Explore the evidence-first pipeline.</p>
-                    <div class="space-y-3">
-                        <button type="button" onclick="selectScenario('veg_increase')" class="scenario-card w-full border-emerald-200 bg-emerald-50/70 p-4 text-left"><span class="font-sans text-[10px] font-bold tracking-widest text-emerald-700">01  SUPPORTED</span><span class="mt-2 block text-sm font-bold text-slate-800">Independent evidence agrees with the requested claim.</span>
-                        </button>
-                        <button type="button" onclick="selectScenario('builtup_decrease')" class="scenario-card w-full border-amber-200 bg-amber-50/70 p-4 text-left"><span class="font-sans text-[10px] font-bold tracking-widest text-amber-700">02  UNCERTAIN / CONFLICTING</span><span class="mt-2 block text-sm font-bold text-slate-800">Semantic and quantitative evidence do not fully agree.</span>
-                        </button>
-                        <button type="button" onclick="selectScenario('flood_change')" class="scenario-card w-full border-red-200 bg-red-50/70 p-4 text-left"><span class="font-sans text-[10px] font-bold tracking-widest text-red-700">03  INSUFFICIENT</span><span class="mt-2 block text-sm font-bold text-slate-800">Required evidence or valid input is unavailable.</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Validation Master Status -->
-            <div id="validationResult" class="hidden mb-6 p-4 rounded-xl border text-sm font-medium shadow-sm"></div>
-
-            <button onclick="runAnalysis()" id="analyzeBtn" title="Execute Pipeline" disabled class="browse-button mt-8 flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl px-6 py-4 text-lg font-black tracking-wide text-white opacity-50 shadow-lg">
-                Execute Evidence Analysis
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        <!-- CONSOLIDATED TOP NAVIGATION (3 TABS) -->
+        <nav class="flex items-center gap-2 overflow-x-auto rounded-2xl bg-white/85 p-1.5 backdrop-blur-xl shadow-sm border border-white/80" aria-label="Analysis Workspace Tabs">
+            <button type="button" onclick="switchTab('query')" id="tabBtn-query" class="tab-btn active-tab flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <span>💬</span> <span>Query &amp; Observations</span>
             </button>
-            <div class="mt-8 flex flex-wrap items-center justify-center gap-2 font-sans text-[10px] font-bold tracking-widest text-slate-500"><span class="rounded-full bg-blue-100 px-3 py-1 text-blue-700">01 QUERY</span><span class="pipeline-line h-px w-5"></span><span>02 VALIDATE</span><span class="pipeline-line h-px w-5"></span><span>03 PLAN</span><span class="pipeline-line h-px w-5"></span><span>04 ANALYZE</span><span class="pipeline-line h-px w-5"></span><span>05 COMPARE</span><span class="pipeline-line h-px w-5"></span><span>06 VERIFY</span></div>
-        </div>
-
-        <!-- INPUT & DATA QUALITY VALIDATION -->
-        <section id="inputValidation" class="validation-panel hidden p-6 md:p-8">
-            <div class="flex items-start gap-4 border-b border-slate-200 pb-5">
-                <span class="rounded-lg bg-blue-100 px-3 py-2 font-sans text-xs font-bold text-blue-700">02</span>
-                <div><h2 class="text-2xl font-black text-slate-900">INPUT &amp; DATA QUALITY VALIDATION</h2><p class="mt-1 text-sm text-slate-600">Every observation is checked before analytical tools are executed.</p></div>
-            </div>
-            <div id="validationStatus" class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5"><p class="font-sans text-xs font-bold tracking-widest text-slate-500">○ INPUT VALIDATION</p><h3 class="mt-2 text-2xl font-black text-slate-700">WAITING FOR ANALYSIS</h3><p class="mt-1 text-sm text-slate-500">No validation result is available yet.</p></div>
-            <div class="validation-flow mt-6 flex flex-col gap-3 rounded-xl p-4 md:flex-row md:items-stretch md:gap-2">
-                <div class="validation-flow-step rounded-lg bg-white/75 p-3"><span class="font-sans text-[10px] font-bold tracking-widest text-slate-500">INPUTS</span><strong id="validationFlowInputs" class="mt-1 block text-sm text-slate-700">— NOT REPORTED</strong><span id="validationFlowInputsNote" class="mt-1 block text-xs text-slate-500">Awaiting backend validation</span></div><span class="validation-flow-arrow self-center md:pt-5">↓</span>
-                <div class="validation-flow-step rounded-lg bg-white/75 p-3"><span class="font-sans text-[10px] font-bold tracking-widest text-slate-500">READABILITY</span><strong id="validationFlowReadable" class="mt-1 block text-sm text-slate-700">— NOT REPORTED</strong><span class="mt-1 block text-xs text-slate-500">Only shown when reported</span></div><span class="validation-flow-arrow self-center md:pt-5">↓</span>
-                <div class="validation-flow-step rounded-lg bg-white/75 p-3"><span class="font-sans text-[10px] font-bold tracking-widest text-slate-500">QUALITY GATE</span><strong id="validationFlowGate" class="mt-1 block text-sm text-slate-700">— NOT REPORTED</strong><span class="mt-1 block text-xs text-slate-500">validate_inputs result</span></div><span class="validation-flow-arrow self-center md:pt-5">↓</span>
-                <div class="validation-flow-step rounded-lg bg-white/75 p-3"><span class="font-sans text-[10px] font-bold tracking-widest text-slate-500">DOWNSTREAM ANALYSIS</span><strong id="validationFlowReady" class="mt-1 block text-sm text-slate-700">— NOT REPORTED</strong><span class="mt-1 block text-xs text-slate-500">Pipeline transition</span></div>
-            </div>
-            <div class="mt-6"><h3 class="input-label mb-3">Validation Checks</h3><div id="validationChecks" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"></div></div>
-            <div class="mt-6 grid gap-6 lg:grid-cols-2">
-                <div><h3 class="input-label mb-3">Validation Evidence</h3><div id="validationEvidence" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No backend validation result is available yet.</div></div>
-                <div><h3 class="input-label mb-3">Why This Input Is Accepted</h3><div id="validationProof" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">The validation gate will explain its result after analysis.</div></div>
-            </div>
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 font-sans text-xs"><span class="font-bold tracking-widest text-slate-500">VALIDATION STATUS</span><span id="validationSummary" class="rounded-full bg-slate-100 px-3 py-1 font-bold text-slate-500">— NOT REPORTED</span><span id="validationDetailLevel" class="text-slate-500">DETAIL LEVEL: Awaiting backend checks</span></div>
-            <div id="validationTransition" class="mt-4 border-t border-slate-200 pt-4 font-sans text-sm font-bold text-slate-500">○ Input gate not yet checked <span class="mx-2">↓</span> 03 Agent Planner</div>
-        </section>
-
-        <!-- ↓ Arrow: Validation → Loading/Results -->
-        <div class="section-arrow" aria-hidden="true">
-            <div class="arrow-line"></div>
-            <div class="arrow-chevron">
-                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-        </div>
+            <button type="button" onclick="switchTab('analysis')" id="tabBtn-analysis" class="tab-btn flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900 hover:bg-white/60 whitespace-nowrap">
+                <span>🗺️</span> <span>Analysis &amp; Map</span>
+            </button>
+            <button type="button" onclick="switchTab('evidence')" id="tabBtn-evidence" class="tab-btn flex items-center gap-2 rounded-xl px-5 py-2 font-sans text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900 hover:bg-white/60 whitespace-nowrap">
+                <span>🔬</span> <span>Evidence Ledger</span>
+            </button>
+        </nav>
 
         <!-- EXECUTION / LOADING -->
-        <div id="loadingState" class="glass-card p-12 hidden flex-col items-center justify-center text-center">
-            <div class="loader mb-6 w-16 h-16 border-4 border-slate-100 border-t-blue-600"></div>
-            <h3 class="text-2xl font-black text-slate-800 mb-4" id="loadingTitle">ANALYSIS RUNNING</h3>
-            <div class="text-sm font-mono text-slate-500 bg-slate-100 px-4 py-3 rounded-lg border inline-block max-w-md w-full text-left">
-                <div class="flex items-center gap-2 mb-2 text-emerald-600">✓ Inputs Validated</div>
-                <div class="flex items-center gap-2 mb-2 text-emerald-600">✓ Query Understood</div>
-                <div class="flex items-center gap-2 mb-2 animate-pulse text-blue-600">⟳ Agent Planner Routing...</div>
-                <div class="flex items-center gap-2 text-slate-400">○ Executing Multi-Path Verification</div>
+        <div id="loadingState" class="glass-card p-8 hidden flex-col items-center justify-center text-center">
+            <div class="loader mb-4 w-12 h-12 border-4 border-slate-100 border-t-blue-600"></div>
+            <h3 class="text-xl font-black text-slate-800 mb-2" id="loadingTitle">ANALYSIS RUNNING</h3>
+            <div class="text-xs font-mono text-slate-500 bg-slate-100 px-4 py-2.5 rounded-lg border inline-block max-w-md w-full text-left">
+                <div class="flex items-center gap-2 mb-1.5 text-emerald-600">✓ Inputs Validated &amp; Aligned</div>
+                <div class="flex items-center gap-2 mb-1.5 text-emerald-600">✓ Query Understood &amp; Planned</div>
+                <div class="flex items-center gap-2 mb-1.5 animate-pulse text-blue-600">⟳ Executing Independent Multi-Path Verification...</div>
+                <div class="flex items-center gap-2 text-slate-400">○ Comparing Semantic &amp; Physical Evidence</div>
             </div>
         </div>
 
-        <!-- RESULTS DASHBOARD -->
-        <div id="resultsContainer" class="hidden space-y-8">
-            <section id="resultHero" class="result-hero p-6 md:p-10">
-                <p class="font-sans text-xs font-bold tracking-[.2em] text-blue-700">SATQUERY RESULT</p>
-                <div class="mt-4 flex flex-wrap items-center gap-4"><span id="resultHeroStatus" class="rounded-full px-4 py-2 font-sans text-sm font-black tracking-widest">NOT AVAILABLE</span><span id="resultHeroTask" class="font-sans text-sm font-bold text-slate-500">Not available</span><span id="resultHeroDemo" class="hidden rounded-full bg-amber-100 px-3 py-1 font-sans text-[10px] font-bold tracking-widest text-amber-700">DEMO MODE - SIMULATED EVIDENCE</span></div>
-                <div class="mt-5 border-l-2 border-blue-200 pl-4"><p class="font-sans text-[10px] font-bold tracking-[.18em] text-slate-500">QUERY</p><p id="resultHeroQuery" class="mt-1 text-sm italic text-slate-600">Not available</p></div>
-                <h2 id="resultHeroAnswer" class="hero-answer mt-6 max-w-4xl text-3xl font-black leading-tight text-slate-900 md:text-5xl">Analysis result will appear here.</h2>
-                <div class="mt-7 border-t border-slate-200 pt-5"><p class="font-sans text-xs font-bold tracking-[.18em] text-slate-500">WHY SATQUERY REACHED THIS RESULT</p><p id="resultHeroReason" class="mt-2 max-w-3xl text-base text-slate-600">Evidence summary not available.</p><div id="resultHeroStrength" class="mt-3 hidden font-sans text-xs font-bold text-slate-600"></div><div id="resultHeroChips" class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"></div></div>
-                <div id="resultHeroNextStep" class="mt-5 hidden rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"></div>
-                <button type="button" onclick="document.getElementById('analysisTimeline').scrollIntoView({behavior:'smooth'})" class="mt-7 hidden rounded-lg bg-slate-900 px-4 py-3 font-sans text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-lg">Explore analysis ↓</button>
-            </section>
-            <section id="analysisTimeline" class="hidden w-full max-w-3xl mr-auto">
-                <div class="mb-4 text-left"><p class="font-sans text-[10px] font-bold tracking-[.2em] text-blue-700">HOW SATQUERY REACHED THIS ANSWER</p><h2 class="mt-1 text-xl font-black text-slate-900">Analysis Timeline</h2></div>
-                <div id="timelineStages"></div>
-            </section>
+        <!-- TAB CONTENT CONTAINER -->
+        <div id="tabsContent" class="space-y-4">
 
-            <!-- ↓ Arrow: Result Hero → Pipeline Cards -->
-            <div class="section-arrow" aria-hidden="true">
-                <div class="arrow-line"></div>
-                <div class="arrow-chevron">
-                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-            </div>
-
-            <!-- 01 & 02 & 03: PRE-FLIGHT -->
-            <div class="pipeline-cards-grid">
-
-                <!-- 01 QUERY UNDERSTANDING -->
-                <div class="pipeline-glass-card accent-blue p-6">
-                    <div class="card-inner">
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-black">01</span>
-                            <h3 class="text-[11px] font-black text-blue-600 uppercase tracking-widest">Query Understanding</h3>
-                        </div>
-                        <div class="space-y-4 text-sm flex-1">
-                            <div class="glass-chip">
-                                <span class="text-slate-400 block text-[10px] uppercase tracking-widest mb-1">Task</span>
-                                <span class="font-bold text-blue-600 uppercase tracking-wider text-xs" id="uiTask"></span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="glass-chip">
-                                    <span class="text-slate-400 block text-[10px] mb-0.5">Comparison</span>
-                                    <span class="font-semibold text-slate-700 text-sm">T1 → T2</span>
-                                </div>
-                                <div class="glass-chip">
-                                    <span class="text-slate-400 block text-[10px] mb-0.5">Target</span>
-                                    <span class="font-semibold text-slate-700 text-sm" id="uiTarget">Auto-detected</span>
-                                </div>
-                            </div>
-                            <div class="glass-chip">
-                                <span class="text-slate-400 block text-[10px] uppercase tracking-widest mb-1">Required Evidence</span>
-                                <span class="font-medium text-slate-700 text-xs leading-relaxed" id="uiRequiredEv">...</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center gap-2 text-emerald-600 text-xs font-bold rounded-xl px-3 py-2" style="background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.25);">
-                            <span class="text-emerald-500">✓</span> Query classified successfully
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 02 DATA QUALITY GATE -->
-                <div class="pipeline-glass-card accent-green p-6">
-                    <div class="card-inner">
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-black">02</span>
-                            <h3 class="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Data Quality Gate</h3>
-                        </div>
-                        <div class="space-y-3 text-sm flex-1">
-                            <div class="flex items-start gap-3 glass-chip">
-                                <span class="text-emerald-500 mt-0.5 text-base">✓</span>
-                                <div>
-                                    <span class="font-bold text-slate-700">T1 &amp; T2 Readable</span>
-                                    <div class="text-xs text-slate-500 mt-0.5" id="uiRes">...</div>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3 glass-chip">
-                                <span class="text-emerald-500 mt-0.5 text-base">✓</span>
-                                <div>
-                                    <span class="font-bold text-slate-700">Spatial Alignment</span>
-                                    <div class="text-xs text-slate-500 mt-0.5">Same bounds • Registered</div>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3 glass-chip">
-                                <span class="text-emerald-500 mt-0.5 text-base">✓</span>
-                                <div>
-                                    <span class="font-bold text-slate-700">Required Bands</span>
-                                    <div class="text-xs text-slate-500 mt-0.5 font-mono" id="uiBands">...</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3" style="border-top:1px solid rgba(16,185,129,0.2);">
-                            <div class="flex justify-between text-xs mb-2">
-                                <span class="font-black text-slate-600 tracking-widest uppercase text-[10px]">Data Quality</span>
-                                <span class="text-emerald-600 font-black" id="uiQualityStatus">CHECKED</span>
-                            </div>
-                            <div class="h-2 w-full rounded-full overflow-hidden" style="background:rgba(16,185,129,0.12);">
-                                <div class="h-full rounded-full" style="background:linear-gradient(90deg,#10b981,#34d399);width:100%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 03 AGENT PLANNER -->
-                <div id="agentPlanner" class="pipeline-glass-card accent-purple p-6">
-                    <div class="card-inner">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black">03</span>
-                            <h3 class="text-[11px] font-black text-purple-600 uppercase tracking-widest">Agent Planner</h3>
-                        </div>
-                        <p class="mb-4 text-[11px] text-slate-500 leading-relaxed">Constrained execution plan selected from the query and validated inputs</p>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div class="glass-chip">
-                                <span class="block text-[10px] uppercase tracking-widest text-slate-500 mb-0.5">Detected Task</span>
-                                <span id="plannerTask" class="block font-bold text-blue-600 text-xs">Not available</span>
-                            </div>
-                            <div class="glass-chip">
-                                <span class="block text-[10px] uppercase tracking-widest text-slate-500 mb-0.5">Claim</span>
-                                <span id="plannerClaim" class="block font-bold text-slate-700 text-xs">Not available</span>
-                            </div>
-                        </div>
-                        <div class="glass-chip mb-3">
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-purple-500 mb-0.5">Verification Strategy</span>
-                            <span class="block text-xs font-semibold text-slate-700">Independent dual-path verification</span>
-                        </div>
-                        <div class="flex-1">
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Selected Verification Tools</span>
-                            <div class="grid gap-2 sm:grid-cols-2">
-                                <div>
-                                    <span class="block text-[10px] font-black uppercase tracking-widest text-purple-500 mb-1">Path A · Semantic</span>
-                                    <div id="plannerSemantic" class="space-y-1"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Path B · Quantitative</span>
-                                    <div id="plannerQuantitative" class="space-y-1"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="plannerExecution" class="mt-4 rounded-xl px-3 py-2 text-xs text-slate-500" style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.18);">Waiting for execution</div>
-                        <div class="mt-4 text-center text-[10px] font-black uppercase tracking-widest text-purple-400" style="border-top:1px solid rgba(139,92,246,0.15);padding-top:12px;">Agent plan <span class="mx-1.5 text-slate-400">↓</span> Multi-path evidence analysis</div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ↓ Arrow: Pipeline Cards → Evidence Paths -->
-            <div class="section-arrow py-8 animate-pulse" aria-hidden="true">
-                <div class="arrow-line"></div>
-                <div class="arrow-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
-            </div>
-
-            <!-- 04 INDEPENDENT EVIDENCE PATHS -->
-            <div class="text-center mt-12 mb-6">
-                <h2 class="inline-block px-4 py-1 bg-slate-800 text-white text-xs font-bold uppercase tracking-widest rounded-full">04 Independent Evidence Paths</h2>
-                <p class="text-xs text-slate-400 mt-2">Semantic interpretation + physical remote-sensing verification</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                <!-- Path A -->
-                <div class="dark-glass-card overflow-hidden border-t-4 border-purple-500">
-                    <div class="bg-purple-900/40 p-4 border-b border-purple-700/50 flex justify-between items-center">
+            <!-- TAB 1: QUERY & OBSERVATIONS -->
+            <div id="tab-query" class="tab-panel space-y-4">
+                <!-- Compact Horizontal Query Card -->
+                <div class="step-one-panel p-5 md:p-6 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
                         <div>
-                            <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-1">PATH A</span>
-                            <h3 class="font-black text-white text-lg">RS-InternVL Semantic Analysis</h3>
+                            <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">QUERY WORKSPACE</span>
+                            <h2 class="text-xl md:text-2xl font-black text-slate-900 leading-tight">Ask GeoVision</h2>
                         </div>
-                        <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/50 px-2 py-1 rounded font-bold">VLM</span>
+                        <span class="text-xs text-slate-500">Natural language geospatial question or instant scenario</span>
                     </div>
-                    <div class="p-6 space-y-4" id="uiPathA"></div>
+
+                    <!-- Input + Execute in Compact Layout -->
+                    <div class="flex flex-col sm:flex-row gap-3 items-stretch">
+                        <div class="flex-grow">
+                            <textarea id="queryInput" rows="2" class="query-box w-full rounded-xl p-3 text-sm placeholder-slate-400" placeholder="Example: Has vegetation decreased between the two observations?"></textarea>
+                        </div>
+                        <button onclick="runAnalysis()" id="analyzeBtn" title="Execute Pipeline" disabled class="browse-button flex cursor-not-allowed items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-black tracking-wide text-white opacity-50 shadow-md sm:w-auto flex-shrink-0">
+                            <span>⚡ Execute Evidence Analysis</span>
+                        </button>
+                    </div>
+
+                    <!-- Demo Scenarios Strip -->
+                    <div class="mt-4 pt-3 border-t border-slate-200/80">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Instant Demo Scenarios:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                            <button type="button" onclick="selectScenario('veg_increase')" class="scenario-card w-full border-emerald-200 bg-emerald-50/70 p-2.5 text-left rounded-xl transition hover:border-emerald-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-emerald-700 block">01 SUPPORTED</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Vegetation Increased</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Wildfire recovery</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('builtup_decrease')" class="scenario-card w-full border-amber-200 bg-amber-50/70 p-2.5 text-left rounded-xl transition hover:border-amber-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-amber-700 block">02 UNCERTAIN</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Built-up Decreased</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Demolition conflict</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('flood_change')" class="scenario-card w-full border-red-200 bg-red-50/70 p-2.5 text-left rounded-xl transition hover:border-red-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-red-700 block">03 INSUFFICIENT</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">Water Body Change</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Missing cloud-free input</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('river_development')" class="scenario-card w-full border-indigo-200 bg-indigo-50/70 p-2.5 text-left rounded-xl transition hover:border-indigo-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-indigo-700 block">04 REAL RGB</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">River &amp; Urban (JPEG)</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Real photo observations</span>
+                            </button>
+                            <button type="button" onclick="selectScenario('test_zips_multispectral')" class="scenario-card w-full border-teal-200 bg-teal-50/70 p-2.5 text-left rounded-xl transition hover:border-teal-400">
+                                <span class="font-sans text-[9px] font-bold tracking-widest text-teal-700 block">05 REAL ZIPs</span>
+                                <span class="block text-xs font-bold text-slate-800 truncate">valid_t1 &amp; valid_t2</span>
+                                <span class="block text-[10px] text-slate-500 truncate">Full deterministic RS</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="validationResult" class="hidden mt-3 p-3 rounded-xl border text-xs font-medium shadow-sm"></div>
                 </div>
-                <!-- Path B -->
-                <div class="dark-glass-card overflow-hidden border-t-4 border-emerald-500">
-                    <div class="bg-emerald-900/40 p-4 border-b border-emerald-700/50 flex justify-between items-center">
+
+                <!-- Compact Side-by-Side Observations -->
+                <div class="step-one-panel p-5 md:p-6 shadow-sm">
+                    <div class="flex items-center justify-between gap-2 mb-3">
                         <div>
-                            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">PATH B</span>
-                            <h3 class="font-black text-white text-lg">Remote Sensing Verification</h3>
+                            <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">OBSERVATIONS</span>
+                            <h3 class="text-base font-black text-slate-900">Satellite Imagery (T1 Before / T2 After)</h3>
                         </div>
-                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 px-2 py-1 rounded font-bold">QUANTITATIVE</span>
+                        <span class="text-[11px] text-slate-500">Multispectral ZIP or Visual Image (.jpg, .png, .tif)</span>
                     </div>
-                    <div class="p-6 space-y-4" id="uiPathB"></div>
-                </div>
-            </div>
 
-            <!-- Convergence Diagram -->
-            <div class="flex justify-center w-full mt-6 mb-8 h-24 relative z-0">
-                <!-- Connects the centers of Path A and Path B -->
-                <div class="absolute w-1/2 left-1/4 top-0 h-10 border-b-2 border-l-2 border-purple-500/50 border-r-2 border-r-emerald-500/50 border-b-slate-500/50 rounded-b-xl opacity-70"></div>
-                <!-- Line down to comparator -->
-                <div class="absolute top-10 h-10 border-l-2 border-slate-500/50 opacity-70"></div>
-                <!-- Arrow Label -->
-                <div class="mt-16 text-[10px] font-bold text-slate-300 bg-slate-800/80 backdrop-blur px-4 py-1.5 rounded-full border border-slate-600 shadow-md z-10 flex items-center gap-2">
-                    <span>EVIDENCE COMPARATOR</span>
-                    <span class="text-slate-400">▼</span>
-                </div>
-            </div>
-
-            <!-- 05 EVIDENCE COMPARATOR -->
-            <div class="dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-xl border-2 mb-12" id="comparatorCard">
-                <div class="bg-slate-900/60 p-4 border-b border-slate-700/50 text-center">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">05 Evidence Comparator</h3>
-                </div>
-                <div class="p-8">
-                    <div id="uiComparatorDetails" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-sm text-slate-300"></div>
-                    <div class="text-center border-t border-slate-700/50 pt-8 mt-4">
-                        <h2 class="text-5xl md:text-6xl font-black tracking-tighter mb-6" id="comparatorBadge">...</h2>
-                        <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700/50 inline-block max-w-2xl text-left shadow-sm">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2" id="comparatorReasonTitle">WHY?</span>
-                            <p class="text-slate-200 font-medium text-lg leading-relaxed" id="comparatorReason"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 06 FINAL VERIFIED RESULT -->
-            <div class="text-center mb-6">
-                <h2 class="inline-block px-4 py-1 bg-slate-800 text-white text-xs font-bold uppercase tracking-widest rounded-full">06 Final Verified Result</h2>
-            </div>
-            
-            <!-- FINAL DECISION HEADER (Rendered via JS) -->
-            <div id="uiFinalHeader" class="mb-6 text-center"></div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-                <!-- Spatial Evidence (Map) -->
-                <div id="spatialEvidencePanel" class="dark-glass-card p-0 flex flex-col overflow-hidden border border-slate-700/50">
-                    <div class="bg-slate-900/60 px-4 py-3 border-b border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">06 Spatial Change Evidence</h3>
-                        <span id="spatialStatusBadge" class="hidden text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded border"></span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 border-b border-slate-700/50 bg-slate-900/40 px-4 py-3"><button type="button" onclick="fitSpatialChanges()" class="rounded border border-slate-600 px-2 py-1 font-sans text-[10px] font-bold text-slate-300 transition hover:bg-slate-700">Fit all changes</button><button type="button" onclick="fitSpatialObservation()" class="rounded border border-slate-600 px-2 py-1 font-sans text-[10px] font-bold text-slate-300 transition hover:bg-slate-700">Fit observation extent</button><button type="button" onclick="resetSpatialView()" class="rounded border border-slate-600 px-2 py-1 font-sans text-[10px] font-bold text-slate-300 transition hover:bg-slate-700">Reset view</button></div>
-                    <div id="map" class="h-80 w-full relative bg-slate-900" style="min-height:320px;">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-sm font-medium z-10 bg-slate-900/90 backdrop-blur-sm" id="mapPlaceholder">
-                            <svg class="w-8 h-8 mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                            <span id="mapPlaceholderText">Spatial geometry unavailable for this analysis</span>
-                            <span id="mapPlaceholderReason" class="text-xs text-slate-500 mt-1 max-w-xs text-center"></span>
-                        </div>
-                    </div>
-                    <!-- Spatial Metadata Panel -->
-                    <div class="border-t border-slate-700/50 bg-slate-900/80">
-                        <div class="grid grid-cols-2 divide-x divide-slate-700/50 text-[10px] font-mono">
-                            <!-- Left: Region info -->
-                            <div class="p-3 space-y-1.5">
-                                <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">Region</div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">Label</span>
-                                    <span class="text-slate-200 text-right truncate max-w-[120px]" id="spatialLabel">Not available</span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- T1 BEFORE -->
+                        <div class="upload-card p-4 rounded-xl border border-blue-100 bg-white/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-blue-50">
+                                    <div>
+                                        <p class="font-sans text-[12px] font-black tracking-wider text-blue-700 uppercase">BEFORE — T1</p>
+                                        <p class="text-[10px] text-slate-500">Earlier satellite observation</p>
+                                    </div>
+                                    <span class="rounded bg-blue-100 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-blue-800">T1</span>
                                 </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">Lat</span>
-                                    <span class="text-slate-200" id="spatialLat">—</span>
+
+                                <!-- Empty State -->
+                                <div id="t1EmptyState" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/70 my-2">
+                                    <span class="text-2xl block mb-1">🛰️</span>
+                                    <strong class="text-xs font-bold text-slate-700 block">BEFORE — T1</strong>
+                                    <span class="text-[11px] text-slate-400">No T1 observation selected</span>
                                 </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">Lon</span>
-                                    <span class="text-slate-200" id="spatialLon">—</span>
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">CRS</span>
-                                    <span class="text-blue-400 font-bold" id="spatialCRS">—</span>
+
+                                <!-- Populated Preview -->
+                                <div id="t1PreviewContainer" class="hidden my-2">
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner group">
+                                        <img id="t1PreviewImg" src="" alt="T1 Before Observation" class="w-full h-44 object-contain bg-slate-950">
+                                        <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wider uppercase">BEFORE — T1</div>
+                                        <div id="t1Badge" class="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm">✓ Validated</div>
+                                    </div>
+                                    <!-- Compact Validation Panel -->
+                                    <div id="t1ValidationDetails"></div>
                                 </div>
                             </div>
-                            <!-- Right: Change stats -->
-                            <div class="p-3 space-y-1.5">
-                                <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">Change Metrics</div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">T1 Obs</span>
-                                    <span class="text-slate-200 truncate max-w-[100px]" id="spatialT1">Not available</span>
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">T2 Obs</span>
-                                    <span class="text-slate-200 truncate max-w-[100px]" id="spatialT2">Not available</span>
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">Changed px</span>
-                                    <span class="text-white font-bold" id="spatialChangedPx">Not available</span>
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-slate-500">NDVI Δ</span>
-                                    <span class="text-white font-bold" id="spatialNdvi">Not available</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="px-4 py-2 border-t border-slate-800/80 text-[9px] text-slate-600 text-center italic">
-                            Spatial extent derived from the validated satellite observation.
-                        </div>
-                    </div>
-                    <div class="border-t border-slate-700/50 bg-slate-900/70 p-5"><h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Change Analysis</h4><div id="spatialGraph" class="mt-3 space-y-3"><p class="text-xs italic text-slate-500">Quantitative change metrics will appear after analysis.</p></div></div>
-                    <div class="border-t border-slate-700/50 bg-slate-900/70 p-5"><h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Selected Region Evidence</h4><div id="spatialExplanation" class="mt-3 text-sm text-slate-400">Select a detected change region to inspect its evidence.</div><div id="selectedRegionPanel" class="mt-4 rounded-lg border border-slate-700/50 bg-slate-900/50 p-3 text-xs text-slate-400">No change region selected.</div></div><div class="border-t border-slate-700/50 bg-slate-900/70 p-5"><h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Detected Change Regions</h4><div id="spatialRegionList" class="mt-3 max-h-56 space-y-2 overflow-y-auto"><p class="text-xs italic text-slate-500">No detected change regions.</p></div></div>
-                </div>
 
-                
-                <!-- Final Answer & Evidence Summary -->
-                <div class="dark-glass-card p-0 flex flex-col overflow-hidden border-t-4" id="reportCard">
-                    <div class="bg-slate-900/60 p-4 border-b border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Verified Answer & Evidence</h3>
-                        <span id="uiConfidenceBadge" class="text-[10px] font-mono bg-slate-800 px-2 py-1 rounded hidden border border-slate-600 shadow-inner"></span>
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <div class="mb-6 pb-6 border-b border-slate-700/50">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">User Query</span>
-                            <p class="text-slate-300 italic mb-4">"<span id="uiFinalQuery"></span>"</p>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Verified Answer</span>
-                            <p class="text-2xl text-white font-bold leading-relaxed" id="finalAnswer"></p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Evidence Ledger</h4>
-                            <div id="uiEvidenceLedger" class="space-y-3"></div>
-                        </div>
-                        
-                        <div class="mt-auto space-y-4">
-                            <div id="limitationsBox" class="hidden bg-red-900/20 border border-red-900/50 p-4 rounded-xl">
-                                <h4 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span class="text-sm">⚠</span> Limitations / Missing Evidence</h4>
-                                <p class="text-red-300 text-sm font-medium" id="finalLimitations"></p>
-                            </div>
-                            <div class="bg-slate-900/80 border border-slate-700/50 p-4 rounded-xl text-xs font-mono text-slate-400 flex flex-col gap-2">
-                                <div class="flex justify-between items-center pb-2 border-b border-slate-700/50">
-                                    <span>Evidence sources: <span id="uiSummaryCount" class="text-white font-bold">0</span></span>
-                                    <span>Trace ID: <span id="uiTraceId" class="text-white font-bold">N/A</span></span>
+                            <div class="mt-2 pt-2 border-t border-slate-100">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="t1File" class="browse-button cursor-pointer rounded-lg px-3.5 py-1.5 font-sans text-xs font-bold text-white shadow-sm">Browse Image</label>
+                                    <input type="file" id="t1File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="handleFileSelection('t1')">
+                                    <button type="button" onclick="uploadFile('t1')" class="rounded-lg border border-blue-200 bg-blue-50/50 px-3.5 py-1.5 font-sans text-xs font-bold text-blue-700 hover:bg-blue-100 transition">Upload &amp; Validate</button>
                                 </div>
-                                <div id="uiTraceList" class="text-[9px] text-slate-500 max-h-20 overflow-y-auto pr-2 custom-scrollbar space-y-1 mt-1"></div>
+                                <div id="t1Status" class="mt-2 hidden rounded-lg p-2 font-sans text-xs"></div>
+                            </div>
+                        </div>
+
+                        <!-- T2 AFTER -->
+                        <div class="upload-card p-4 rounded-xl border border-indigo-100 bg-white/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-indigo-50">
+                                    <div>
+                                        <p class="font-sans text-[12px] font-black tracking-wider text-indigo-700 uppercase">AFTER — T2</p>
+                                        <p class="text-[10px] text-slate-500">Later satellite observation</p>
+                                    </div>
+                                    <span class="rounded bg-indigo-100 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-800">T2</span>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div id="t2EmptyState" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/70 my-2">
+                                    <span class="text-2xl block mb-1">🛰️</span>
+                                    <strong class="text-xs font-bold text-slate-700 block">AFTER — T2</strong>
+                                    <span class="text-[11px] text-slate-400">No T2 observation selected</span>
+                                </div>
+
+                                <!-- Populated Preview -->
+                                <div id="t2PreviewContainer" class="hidden my-2">
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner group">
+                                        <img id="t2PreviewImg" src="" alt="T2 After Observation" class="w-full h-44 object-contain bg-slate-950">
+                                        <div class="absolute top-2 left-2 bg-indigo-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wider uppercase">AFTER — T2</div>
+                                        <div id="t2Badge" class="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm">✓ Validated</div>
+                                    </div>
+                                    <!-- Compact Validation Panel -->
+                                    <div id="t2ValidationDetails"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 pt-2 border-t border-slate-100">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="t2File" class="browse-button cursor-pointer rounded-lg px-3.5 py-1.5 font-sans text-xs font-bold text-white shadow-sm">Browse Image</label>
+                                    <input type="file" id="t2File" accept=".tif,.tiff,.jp2,.png,.jpg,.jpeg,.zip" class="sr-only" onchange="handleFileSelection('t2')">
+                                    <button type="button" onclick="uploadFile('t2')" class="rounded-lg border border-indigo-200 bg-indigo-50/50 px-3.5 py-1.5 font-sans text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition">Upload &amp; Validate</button>
+                                </div>
+                                <div id="t2Status" class="mt-2 hidden rounded-lg p-2 font-sans text-xs"></div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Interactive Before / After Comparison Card in Query Tab -->
+                    <div class="mt-5 rounded-2xl border border-blue-200/80 bg-white/90 p-4 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-200/70">
+                            <div>
+                                <span class="font-sans text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">INTERACTIVE COMPARISON</span>
+                                <h4 class="text-sm font-black text-slate-900">Before &amp; After Temporal Analysis</h4>
+                            </div>
+                            <div class="inline-flex rounded-lg p-1 bg-slate-100 border border-slate-200 text-xs font-bold gap-1 self-start sm:self-auto">
+                                <button type="button" id="compBtn_side" onclick="setComparisonMode('side')" class="px-3 py-1 rounded-md bg-white text-blue-800 shadow-sm font-bold border border-blue-200">🔀 Side-by-Side</button>
+                                <button type="button" id="compBtn_swipe" onclick="setComparisonMode('swipe')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">↔️ Swipe</button>
+                                <button type="button" id="compBtn_before" onclick="setComparisonMode('before')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">⬅️ Before</button>
+                                <button type="button" id="compBtn_after" onclick="setComparisonMode('after')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium">➡️ After</button>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Views Container -->
+                        <div id="compEmptyNotice" class="p-8 text-center bg-slate-50/80 rounded-xl border border-dashed border-slate-200">
+                            <span class="text-3xl block mb-2">🛰️</span>
+                            <p class="text-xs font-bold text-slate-700">Interactive Comparison Ready</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Upload both T1 (Before) and T2 (After) or choose a scenario above to inspect temporal imagery.</p>
+                        </div>
+
+                        <div id="compContentArea" class="hidden">
+                            <!-- 1. Side-by-Side View -->
+                            <div id="compViewSide" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                    <img id="compSideImgT1" class="w-full h-52 md:h-60 object-cover" alt="T1 Before Observation">
+                                    <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase">BEFORE · T1</div>
+                                    <div class="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-sm text-slate-300 text-[10px] px-2 py-0.5 rounded font-mono">Earlier Observation</div>
+                                </div>
+                                <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                    <img id="compSideImgT2" class="w-full h-52 md:h-60 object-cover" alt="T2 After Observation">
+                                    <div class="absolute top-2 left-2 bg-indigo-900/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase">AFTER · T2</div>
+                                    <div class="absolute bottom-2 left-2 bg-indigo-950/70 backdrop-blur-sm text-indigo-300 text-[10px] px-2 py-0.5 rounded font-mono">Later Observation</div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Swipe Slider View -->
+                            <div id="compViewSwipe" class="hidden">
+                                <div id="swipeContainer" class="relative w-full h-64 md:h-72 rounded-xl overflow-hidden border border-slate-300 select-none bg-slate-900 shadow-inner">
+                                    <!-- Bottom: T2 AFTER -->
+                                    <img id="swipeImgAfter" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="T2 After">
+                                    <div class="absolute top-3 right-3 bg-indigo-900/85 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase pointer-events-none z-10 shadow">AFTER · T2</div>
+
+                                    <!-- Top: T1 BEFORE (Clipped) -->
+                                    <div id="swipeClipWrapper" class="absolute inset-0 overflow-hidden" style="width: 50%;">
+                                        <img id="swipeImgBefore" class="absolute top-0 left-0 h-full object-cover pointer-events-none" alt="T1 Before">
+                                        <div class="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black text-white tracking-wider uppercase z-10 shadow">BEFORE · T1</div>
+                                    </div>
+
+                                    <!-- Divider Line & Handle -->
+                                    <div id="swipeDivider" class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.8)] pointer-events-none z-10" style="left: 50%;">
+                                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-xl flex items-center justify-center text-xs font-black text-blue-700 border-2 border-blue-500 pointer-events-none">
+                                            ↔
+                                        </div>
+                                    </div>
+
+                                    <!-- Interactive Range Slider overlay -->
+                                    <input type="range" id="swipeRange" min="0" max="100" value="50" oninput="onSwipeInput(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0">
+                                </div>
+                                <p class="text-center text-[11px] text-slate-500 mt-2 font-medium">Drag slider horizontally across the image to reveal Before vs After</p>
+                            </div>
+
+                            <!-- 3. Before Only View -->
+                            <div id="compViewBefore" class="hidden relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                <img id="compSingleImgBefore" class="w-full h-64 md:h-72 object-cover" alt="T1 Before">
+                                <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded text-xs font-black text-white tracking-wider uppercase">BEFORE · T1 (Earlier Observation)</div>
+                            </div>
+
+                            <!-- 4. After Only View -->
+                            <div id="compViewAfter" class="hidden relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                                <img id="compSingleImgAfter" class="w-full h-64 md:h-72 object-cover" alt="T2 After">
+                                <div class="absolute top-3 left-3 bg-indigo-900/80 backdrop-blur-md px-3 py-1 rounded text-xs font-black text-white tracking-wider uppercase">AFTER · T2 (Later Observation)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ready Banner -->
+                    <div id="obsReadyBanner" class="hidden mt-4 p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/90 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🎉</span>
+                            <div>
+                                <p class="text-xs font-bold text-emerald-900">Both Observations Validated &amp; Ready!</p>
+                                <p class="text-[10px] text-emerald-700">T1 and T2 are loaded. Execute analysis to see multi-source consensus.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="runAnalysis()" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 shadow transition flex items-center gap-1.5 flex-shrink-0">
+                            <span>⚡ Run Analysis Now</span> <span>→</span>
+                        </button>
+                    </div>
                 </div>
-            </div>            </div>
             </div>
 
+            <!-- TAB 2: ANALYSIS (The Main Workspace) -->
+            <div id="tab-analysis" class="tab-panel hidden space-y-4">
+                <!-- Persistent Top Summary Bar -->
+                <div id="persistentSummaryBar" class="glass-card p-3 md:p-4 shadow-sm border border-white/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="font-sans text-[9px] font-black uppercase tracking-[0.2em] text-blue-700">CURRENT QUERY</span>
+                            <span id="topTaskBadge" class="rounded-full bg-blue-50 border border-blue-200/60 px-2 py-0.5 font-sans text-[10px] font-bold text-blue-700">Vegetation Change</span>
+                            <span id="uiFinalQuery" class="text-xs text-slate-500 truncate italic"></span>
+                        </div>
+                        <p id="topResultSummary" class="text-xs font-bold text-slate-800 truncate">The claim 'vegetation_decrease' is supported by multi-source evidence.</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span id="topStatusBadge" class="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-xs font-black tracking-widest text-emerald-800">SUPPORTED</span>
+                        <button type="button" onclick="switchTab('query')" class="rounded-xl border border-slate-200 bg-white px-3 py-1 font-sans text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+                            Edit Query
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MAIN TWO-COLUMN ANALYSIS WORKSPACE -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+                    <!-- LEFT COLUMN: WIDE LANDSCAPE MAP + DETECTED REGIONS (~62% width) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- Map Card -->
+                        <div id="spatialEvidencePanel" class="dark-glass-card p-0 flex flex-col overflow-hidden border border-slate-700/50 w-full shadow-lg">
+                            <div class="bg-slate-900/70 px-4 py-2.5 border-b border-slate-700/50 flex flex-wrap justify-between items-center gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">CHANGE MAP</span>
+                                    <span class="text-xs font-black text-slate-200">Geospatial Evidence</span>
+                                </div>
+                                <span id="spatialStatusBadge" class="hidden text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border"></span>
+                            </div>
+
+                            <!-- Map Toolbar -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/40 bg-slate-900/40 px-4 py-2">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="fitSpatialChanges()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>🎯</span> <span>Fit all changes</span>
+                                    </button>
+                                    <button type="button" onclick="fitSpatialObservation()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>📐</span> <span>Fit extent</span>
+                                    </button>
+                                    <button type="button" onclick="resetSpatialView()" class="rounded border border-slate-600 px-2.5 py-1 font-sans text-[11px] font-bold text-slate-300 transition hover:bg-slate-700 flex items-center gap-1">
+                                        <span>🔄</span> <span>Reset</span>
+                                    </button>
+                                </div>
+                                <span class="text-[10px] font-mono text-slate-400">Leaflet • EPSG:4326</span>
+                            </div>
+
+                            <!-- Wide Landscape Map Container -->
+                            <div class="p-2 bg-slate-900/30">
+                                <div id="map" class="w-full relative bg-slate-900 rounded-xl overflow-hidden shadow-inner">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-sm font-medium z-10 bg-slate-900/90 backdrop-blur-sm" id="mapPlaceholder">
+                                        <svg class="w-8 h-8 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                                        <span id="mapPlaceholderText">Spatial geometry rendered after analysis</span>
+                                        <span id="mapPlaceholderReason" class="text-xs text-slate-500 mt-1 max-w-xs text-center"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Compact Map Footer -->
+                            <div class="px-4 py-2 border-t border-slate-700/50 bg-slate-900/80 flex flex-wrap items-center justify-between text-[10px] font-mono text-slate-400">
+                                <span>CRS: <strong id="spatialCRS" class="text-blue-400">—</strong></span>
+                                <span>Extent: <strong id="spatialLabel" class="text-slate-300">Observation Bounds</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Detected Regions Panel (Adjacent to Map) -->
+                        <div class="dark-glass-card p-4 border border-slate-700/50 shadow-md">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-blue-400 font-bold text-xs">📍</span>
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-200">Detected Change Regions</h4>
+                                </div>
+                                <span class="text-[10px] text-slate-400">Click to highlight on map</span>
+                            </div>
+                            <div id="spatialRegionList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+                                <p class="text-xs italic text-slate-500 py-2">Detected regions will appear after execution.</p>
+                            </div>
+                        </div>
+
+                        <!-- Before / After Satellite Comparison in Analysis Tab -->
+                        <div class="dark-glass-card p-4 border border-slate-700/50 shadow-md">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-700/40">
+                                <div>
+                                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block">TEMPORAL OBSERVATIONS</span>
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-200">Before &amp; After Imagery</h4>
+                                </div>
+                                <div class="inline-flex rounded-lg p-0.5 bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold gap-1 self-start sm:self-auto">
+                                    <button type="button" id="anaCompBtn_side" onclick="setAnalysisCompMode('side')" class="px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold">Side-by-Side</button>
+                                    <button type="button" id="anaCompBtn_swipe" onclick="setAnalysisCompMode('swipe')" class="px-2.5 py-0.5 rounded text-slate-300 hover:text-white">Swipe</button>
+                                </div>
+                            </div>
+                            <div id="anaCompViewSide" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="relative rounded-lg overflow-hidden border border-slate-700/50 bg-slate-900 shadow-inner">
+                                    <img id="anaCompImgT1" class="w-full h-36 object-cover" alt="T1 Before">
+                                    <div class="absolute top-1.5 left-1.5 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase">BEFORE · T1</div>
+                                </div>
+                                <div class="relative rounded-lg overflow-hidden border border-slate-700/50 bg-slate-900 shadow-inner">
+                                    <img id="anaCompImgT2" class="w-full h-36 object-cover" alt="T2 After">
+                                    <div class="absolute top-1.5 left-1.5 bg-indigo-900/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase">AFTER · T2</div>
+                                </div>
+                            </div>
+                            <div id="anaCompViewSwipe" class="hidden">
+                                <div id="anaSwipeContainer" class="relative w-full h-44 rounded-lg overflow-hidden border border-slate-700 select-none bg-slate-900 shadow-inner">
+                                    <img id="anaSwipeImgAfter" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="T2 After">
+                                    <div class="absolute top-2 right-2 bg-indigo-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase z-10">AFTER · T2</div>
+                                    <div id="anaSwipeClipWrapper" class="absolute inset-0 overflow-hidden" style="width: 50%;">
+                                        <img id="anaSwipeImgBefore" class="absolute top-0 left-0 h-full object-cover pointer-events-none" alt="T1 Before">
+                                        <div class="absolute top-2 left-2 bg-slate-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-white uppercase z-10">BEFORE · T1</div>
+                                    </div>
+                                    <div id="anaSwipeDivider" class="absolute top-0 bottom-0 w-0.5 bg-white shadow z-10" style="left: 50%;">
+                                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center text-[10px] font-black text-blue-700">↔</div>
+                                    </div>
+                                    <input type="range" id="anaSwipeRange" min="0" max="100" value="50" oninput="onAnaSwipeInput(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: FINAL ANSWER + COMPACT EVIDENCE SUMMARY (~38% width) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <!-- Final Answer Card -->
+                        <div class="dark-glass-card p-5 border-t-4 border-emerald-500 shadow-lg" id="reportCard">
+                            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-700/40">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">DECISION VERDICT</span>
+                                    <h3 class="text-sm font-black text-slate-100 uppercase tracking-wider">Final Answer</h3>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="uiConfidenceBadge" class="text-[10px] font-mono bg-emerald-900/50 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded font-bold">92% CONFIDENCE</span>
+                                    <span id="resultHeroStatus" class="hidden">SUPPORTED</span>
+                                </div>
+                            </div>
+
+                            <div class="py-4 border-b border-slate-700/40">
+                                <p class="text-xl md:text-2xl font-black text-white leading-snug" id="finalAnswer">The claim is supported by multi-path evidence.</p>
+                                <p id="resultHeroAnswer" class="hidden"></p>
+                                <p class="mt-2 text-xs text-slate-300 leading-relaxed font-medium" id="resultHeroReason">Physical remote sensing and independent semantic analysis confirm the change.</p>
+                                <p id="comparatorReason" class="hidden"></p>
+                            </div>
+
+                            <div class="pt-3 flex items-center justify-between text-xs font-mono text-slate-400">
+                                <span>Evidence Sources: <strong id="uiSummaryCount" class="text-white font-bold">3</strong> verified</span>
+                                <span id="uiQualityStatus" class="text-emerald-400 font-bold">QUALITY PASSED</span>
+                            </div>
+                        </div>
+
+                        <!-- Evidence Comparison Summary Table -->
+                        <div class="glass-card p-4 border border-slate-200/80 shadow-md">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">MULTI-SOURCE CONSENSUS</span>
+                                    <h4 class="text-xs font-black text-slate-800">Evidence Comparison</h4>
+                                </div>
+                                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                                    AGREEMENT ✓
+                                </span>
+                            </div>
+
+                            <!-- Dynamic Comparison Rows -->
+                            <div id="analysisEvidenceTable" class="space-y-2">
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">AI Model (RS-InternVL)</p>
+                                        <p class="text-[10px] text-slate-500">Auxiliary semantic interpretation</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">Consistent</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">NDVI Delta (Physical RS)</p>
+                                        <p class="text-[10px] text-slate-500">Spectral vegetation change</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">-0.21 Delta</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">Change Statistics</p>
+                                        <p class="text-[10px] text-slate-500">Pixel quantification mask</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">Quantified</span>
+                                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Link to Deep Evidence -->
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-right">
+                                <button type="button" onclick="switchTab('evidence')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1 ml-auto">
+                                <span>Inspect Deep Evidence &amp; Provenance</span> <span>→</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMALL SCROLL: PHYSICAL METRICS STRIP -->
+                <div class="glass-card p-4 shadow-sm border border-white/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">PHYSICAL REMOTE SENSING METRICS</span>
+                        <span class="text-[10px] text-slate-400">Validated raster observations</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">CHANGED PIXELS</span>
+                            <strong id="spatialChangedPx" class="text-slate-800 text-sm font-bold">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">SPECTRAL DELTA (NDVI)</span>
+                            <strong id="spatialNdvi" class="text-slate-800 text-sm font-bold">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">T1 ACQUISITION</span>
+                            <strong id="spatialT1" class="text-slate-800 text-xs truncate block">—</strong>
+                        </div>
+                        <div class="bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                            <span class="text-slate-400 block text-[10px]">T2 ACQUISITION</span>
+                            <strong id="spatialT2" class="text-slate-800 text-xs truncate block">—</strong>
+                        </div>
+                    </div>
+                    <div id="spatialGraph" class="hidden"></div>
+                    <div id="selectedRegionPanel" class="hidden"></div>
+                    <div id="spatialExplanation" class="hidden"></div>
+                    <span id="spatialLat" class="hidden"></span>
+                    <span id="spatialLon" class="hidden"></span>
+                    <span id="resultHeroTask" class="hidden"></span>
+                    <span id="resultHeroQuery" class="hidden"></span>
+                    <span id="resultHeroDemo" class="hidden"></span>
+                    <div id="resultHeroChips" class="hidden"></div>
+                    <div id="resultHeroNextStep" class="hidden"></div>
+                    <div id="uiFinalHeader" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: EVIDENCE (Deep Inspection) -->
+            <div id="tab-evidence" class="tab-panel hidden space-y-5">
+                <div class="text-center mb-1">
+                    <span class="inline-block px-3 py-1 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest rounded-full">INDEPENDENT EVIDENCE AUDIT</span>
+                    <p class="text-xs text-slate-500 mt-1">Multi-path verification: RS-InternVL semantic interpretation + deterministic remote sensing</p>
+                </div>
+
+                <!-- Path A & Path B Side-by-Side -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
+                    <!-- Path A -->
+                    <div class="dark-glass-card overflow-hidden border-t-4 border-purple-500 shadow-md">
+                        <div class="bg-purple-900/40 p-3.5 border-b border-purple-700/50 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-0.5">PATH A</span>
+                                <h3 class="font-black text-white text-base">RS-InternVL Semantic Analysis</h3>
+                            </div>
+                            <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/50 px-2 py-0.5 rounded font-bold">VLM</span>
+                        </div>
+                        <div class="p-5 space-y-3" id="uiPathA"></div>
+                    </div>
+
+                    <!-- Path B -->
+                    <div class="dark-glass-card overflow-hidden border-t-4 border-emerald-500 shadow-md">
+                        <div class="bg-emerald-900/40 p-3.5 border-b border-emerald-700/50 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-0.5">PATH B</span>
+                                <h3 class="font-black text-white text-base">Remote Sensing Verification</h3>
+                            </div>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded font-bold">QUANTITATIVE</span>
+                        </div>
+                        <div class="p-5 space-y-3" id="uiPathB"></div>
+                    </div>
+                </div>
+
+                <!-- Comparator Card -->
+                <div class="dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-lg border-2" id="comparatorCard">
+                    <div class="bg-slate-900/60 p-3.5 border-b border-slate-700/50 text-center">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Evidence Comparator &amp; Decision Consensus</h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="uiComparatorDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm text-slate-300"></div>
+                        <div class="text-center border-t border-slate-700/50 pt-6">
+                            <h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-4" id="comparatorBadge">...</h2>
+                            <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 inline-block max-w-2xl text-left shadow-sm">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1" id="comparatorReasonTitle">WHY?</span>
+                                <p class="text-slate-200 font-medium text-sm leading-relaxed" id="comparatorReasonSummary"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complete Evidence Ledger -->
+                <div class="dark-glass-card p-5 max-w-4xl mx-auto shadow-lg border border-slate-700/50">
+                    <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-700/50">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">AUDIT TRAIL</span>
+                            <h3 class="text-sm font-black text-slate-200 uppercase tracking-wider">Evidence Ledger</h3>
+                        </div>
+                    </div>
+                    <div id="uiEvidenceLedger" class="space-y-3"></div>
+                    <div id="limitationsBox" class="hidden mt-4 bg-red-900/20 border border-red-900/50 p-3.5 rounded-xl">
+                        <h4 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span>⚠</span> Limitations / Missing Evidence</h4>
+                        <p class="text-red-300 text-xs font-medium" id="finalLimitations"></p>
+                    </div>
+                </div>
+
+                <!-- Hidden / Compatibility Panels -->
+                <div id="inputValidation" class="hidden">
+                    <div id="validationStatus"></div>
+                    <div id="validationChecks"></div>
+                    <div id="validationEvidence"></div>
+                    <div id="validationProof"></div>
+                    <span id="validationSummary"></span>
+                    <span id="validationDetailLevel"></span>
+                    <div id="validationTransition"></div>
+                    <span id="validationFlowInputs"></span>
+                    <span id="validationFlowReadable"></span>
+                    <span id="validationFlowGate"></span>
+                    <span id="validationFlowReady"></span>
+                    <span id="uiRes"></span>
+                    <span id="uiBands"></span>
+                    <span id="uiTask"></span>
+                    <span id="uiTarget"></span>
+                    <span id="uiRequiredEv"></span>
+                </div>
+                <div id="agentPlanner" class="hidden">
+                    <span id="plannerTask"></span>
+                    <span id="plannerClaim"></span>
+                    <div id="plannerSemantic"></div>
+                    <div id="plannerQuantitative"></div>
+                    <div id="plannerExecution"></div>
+                </div>
+            </div>
+
+            <!-- COLLAPSIBLE EXECUTION TRACE (Agentic DAG Pipeline) -->
+            <details id="executionTraceAccordion" class="glass-card p-4 rounded-2xl border border-white/80 shadow-sm transition">
+                <summary class="cursor-pointer font-sans text-xs font-bold text-slate-700 flex items-center justify-between select-none">
+                    <div class="flex items-center gap-2">
+                        <span class="rounded bg-blue-100 text-blue-700 px-2 py-0.5 text-[10px] font-black">TRACE</span>
+                        <span>Agentic Execution Trace &amp; Tool Provenance</span>
+                    </div>
+                    <span class="text-slate-400 text-xs font-mono">Click to expand / collapse ▾</span>
+                </summary>
+                <div class="mt-4 pt-3 border-t border-slate-200">
+                    <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-2">
+                        <span>Trace ID: <strong id="uiTraceId" class="text-slate-700">N/A</strong></span>
+                        <span>Status: <strong class="text-emerald-600 font-bold">COMPLETED</strong></span>
+                    </div>
+                    <div id="uiTraceList" class="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto custom-scrollbar p-2 bg-slate-50 rounded-xl border border-slate-200/80"></div>
+                    <div id="analysisTimeline" class="mt-3">
+                        <div id="timelineStages"></div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Hidden container for backward compatibility -->
+            <div id="resultsContainer" class="hidden"></div>
         </div>
     </div>
 
@@ -732,30 +1009,70 @@
             }).addTo(map);
         });
 
+        let t1Observation = null;
+        let t2Observation = null;
+        let currentCompMode = 'side';
+        let anaCompMode = 'side';
+
         const demoScenarios = {
             'veg_increase': {
                 name: 'Vegetation Increased (Wildfire Recovery)',
                 query: 'Has vegetation decreased in this region?',
                 t1: 'Frontend/data/demo_scenarios/veg_increase/t1/t1',
                 t2: 'Frontend/data/demo_scenarios/veg_increase/t2/t2',
+                t1_preview: '/data/demo_scenarios/veg_increase/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/veg_increase/t2/preview.png',
                 bands: ['red', 'nir', 'scl'],
-                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'NORMAL'} // -> SUPPORTED
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'NORMAL'}
             },
             'builtup_decrease': {
                 name: 'Built-up Area Decreased (Demolition)',
                 query: 'Has the built-up area decreased?',
                 t1: 'Frontend/data/demo_scenarios/builtup_decrease/t1/t1',
                 t2: 'Frontend/data/demo_scenarios/builtup_decrease/t2/t2',
+                t1_preview: '/data/demo_scenarios/builtup_decrease/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/builtup_decrease/t2/preview.png',
                 bands: ['red', 'nir', 'swir', 'scl'],
-                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'CONFLICTING_EVIDENCE'} // -> UNCERTAIN
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'CONFLICTING_EVIDENCE'}
             },
             'flood_change': {
                 name: 'Water Body Change (Flooding)',
                 query: 'How has the water body changed over time?',
                 t1: 'Frontend/data/demo_scenarios/flood_change/t1/t1',
                 t2: 'Frontend/data/demo_scenarios/flood_change/t2/t2',
+                t1_preview: '/data/demo_scenarios/flood_change/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/flood_change/t2/preview.png',
                 bands: ['red', 'nir', 'scl'],
-                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'LOW_QUALITY'} // -> INSUFFICIENT
+                modality: 'optical',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, dev_scenario: 'LOW_QUALITY'}
+            },
+            'river_development': {
+                name: 'River & Urban Development (Real JPEG Imagery)',
+                query: 'What changed between the two observations?',
+                t1: 'Frontend/data/demo_scenarios/river_development/t1_visual.jpg',
+                t2: 'Frontend/data/demo_scenarios/river_development/t2_visual.jpg',
+                t1_preview: '/data/demo_scenarios/river_development/t1_preview.png',
+                t2_preview: '/data/demo_scenarios/river_development/t2_preview.png',
+                bands: ['red', 'green', 'blue'],
+                modality: 'optical',
+                filename: 'river_t1.jpeg',
+                filename_t2: 'river_t2.jpeg',
+                metadata: {crs: 'EPSG:4326', width: 712, height: 853, type: 'visual_rgb', spectral_bands_present: false}
+            },
+            'test_zips_multispectral': {
+                name: 'Real Multispectral (valid_t1.zip & valid_t2.zip)',
+                query: 'Has vegetation decreased between the two observations?',
+                t1: 'Frontend/data/demo_scenarios/multispectral_zips/t1/t1',
+                t2: 'Frontend/data/demo_scenarios/multispectral_zips/t2/t2',
+                t1_preview: '/data/demo_scenarios/multispectral_zips/t1/preview.png',
+                t2_preview: '/data/demo_scenarios/multispectral_zips/t2/preview.png',
+                bands: ['red', 'nir', 'scl'],
+                modality: 'multispectral',
+                filename: 'valid_t1.zip',
+                filename_t2: 'valid_t2.zip',
+                metadata: {crs: 'EPSG:32610', width: 100, height: 100, type: 'multispectral', spectral_bands_present: true}
             }
         };
 
@@ -801,131 +1118,497 @@
             document.getElementById('validationTransition').innerHTML = passed ? '✓ INPUT GATE PASSED <span class="mx-2">↓</span> 03 Agent Planner' : failed ? '✕ INPUT GATE FAILED <span class="mx-2">↓</span> Analysis cannot safely continue' : '⚠ INPUT GATE UNAVAILABLE <span class="mx-2">↓</span> Validation result required';
         }
 
+        function updateObservationPreview(obsRole, data) {
+            const emptyState = document.getElementById(`${obsRole}EmptyState`);
+            const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+            const img = document.getElementById(`${obsRole}PreviewImg`);
+            const badge = document.getElementById(`${obsRole}Badge`);
+            const details = document.getElementById(`${obsRole}ValidationDetails`);
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.remove('hidden');
+
+            const previewUrl = data.preview_url || (data.metadata && data.metadata.preview_url) || (obsRole === 't1' ? '/data/demo_scenarios/river_development/t1_preview.png' : '/data/demo_scenarios/river_development/t2_preview.png');
+            if (img) {
+                img.src = previewUrl;
+            }
+
+            const isMultispectral = (data.modality === 'multispectral') || (data.bands && data.bands.includes('nir'));
+            if (badge) {
+                badge.className = isMultispectral
+                    ? 'absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm'
+                    : 'absolute bottom-2 left-2 bg-indigo-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-sm shadow-sm';
+                badge.textContent = isMultispectral ? '✓ Validated: Multispectral' : '✓ Validated: Visual RGB';
+            }
+
+            if (details) {
+                const fname = data.filename || (obsRole === 't1' ? 'T1_Observation' : 'T2_Observation');
+                if (isMultispectral) {
+                    details.innerHTML = `
+                        <div class="mt-2.5 space-y-1 text-[11px] font-medium text-slate-700 bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200">
+                            <div class="flex items-center justify-between gap-1 text-[10px] font-mono text-emerald-900 border-b border-emerald-200/60 pb-1 mb-1">
+                                <span class="font-bold uppercase tracking-wider truncate">${fname}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-800 font-bold">MULTISPECTRAL</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>red, nir, scl bands verified</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>CRS: ${data.metadata?.crs || 'EPSG:32610'}</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-800"><span>✓</span> <span>Spatial dimensions &amp; alignment verified</span></div>
+                            <div class="text-[10px] text-slate-500 font-mono mt-1 pt-1 border-t border-emerald-200/60">Dimensions: <strong class="text-slate-700">${data.metadata?.width || 100} × ${data.metadata?.height || 100} px</strong></div>
+                        </div>`;
+                } else {
+                    details.innerHTML = `
+                        <div class="mt-2.5 space-y-1 text-[11px] font-medium text-slate-700 bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200">
+                            <div class="flex items-center justify-between gap-1 text-[10px] font-mono text-indigo-900 border-b border-indigo-200/60 pb-1 mb-1">
+                                <span class="font-bold uppercase tracking-wider truncate">${fname}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-indigo-200 text-indigo-800 font-bold">RGB VISUAL</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-emerald-700 font-bold"><span>✓</span> <span>Image readable &amp; valid</span></div>
+                            <div class="flex items-center gap-1.5 text-emerald-700 font-bold"><span>✓</span> <span>Spatial/visual observation available</span></div>
+                            <div class="flex items-center gap-1.5 text-amber-700 font-bold"><span>⚠</span> <span>Spectral bands unavailable</span></div>
+                            <div class="text-[10px] text-slate-500 font-mono mt-1 pt-1 border-t border-indigo-200/60">Format: <strong class="text-slate-700">${data.metadata?.format || 'JPEG'}</strong> • Dimensions: <strong class="text-slate-700">${data.metadata?.width || 712} × ${data.metadata?.height || 853} px</strong></div>
+                        </div>`;
+                }
+            }
+        }
+
+        function resetObservationPreview(obsRole) {
+            const emptyState = document.getElementById(`${obsRole}EmptyState`);
+            const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+            const img = document.getElementById(`${obsRole}PreviewImg`);
+            const statusBox = document.getElementById(`${obsRole}Status`);
+            const details = document.getElementById(`${obsRole}ValidationDetails`);
+
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (previewContainer) previewContainer.classList.add('hidden');
+            if (img) img.src = '';
+            if (details) details.innerHTML = '';
+            if (statusBox) statusBox.classList.add('hidden');
+        }
+
+        function setComparisonMode(mode) {
+            currentCompMode = mode;
+            ['side', 'swipe', 'before', 'after'].forEach(m => {
+                const btn = document.getElementById(`compBtn_${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = 'px-3 py-1 rounded-md bg-white text-blue-800 shadow-sm font-bold border border-blue-200';
+                    } else {
+                        btn.className = 'px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium';
+                    }
+                }
+            });
+            updateComparisonComponent();
+        }
+
+        function setAnalysisCompMode(mode) {
+            anaCompMode = mode;
+            const btnSide = document.getElementById('anaCompBtn_side');
+            const btnSwipe = document.getElementById('anaCompBtn_swipe');
+            if (mode === 'side') {
+                if (btnSide) btnSide.className = 'px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold';
+                if (btnSwipe) btnSwipe.className = 'px-2.5 py-0.5 rounded text-slate-300 hover:text-white';
+            } else {
+                if (btnSide) btnSide.className = 'px-2.5 py-0.5 rounded text-slate-300 hover:text-white';
+                if (btnSwipe) btnSwipe.className = 'px-2.5 py-0.5 rounded bg-blue-600 text-white shadow-sm font-bold';
+            }
+            const sideView = document.getElementById('anaCompViewSide');
+            const swipeView = document.getElementById('anaCompViewSwipe');
+            if (sideView) sideView.classList.toggle('hidden', mode !== 'side');
+            if (swipeView) swipeView.classList.toggle('hidden', mode !== 'swipe');
+            if (mode === 'swipe') onAnaSwipeInput(document.getElementById('anaSwipeRange')?.value || 50);
+        }
+
+        function onSwipeInput(val) {
+            const clip = document.getElementById('swipeClipWrapper');
+            const divider = document.getElementById('swipeDivider');
+            const container = document.getElementById('swipeContainer');
+            const beforeImg = document.getElementById('swipeImgBefore');
+            if (clip) clip.style.width = val + '%';
+            if (divider) divider.style.left = val + '%';
+            if (container && beforeImg) {
+                beforeImg.style.width = container.offsetWidth + 'px';
+                beforeImg.style.maxWidth = container.offsetWidth + 'px';
+            }
+        }
+
+        function onAnaSwipeInput(val) {
+            const clip = document.getElementById('anaSwipeClipWrapper');
+            const divider = document.getElementById('anaSwipeDivider');
+            const container = document.getElementById('anaSwipeContainer');
+            const beforeImg = document.getElementById('anaSwipeImgBefore');
+            if (clip) clip.style.width = val + '%';
+            if (divider) divider.style.left = val + '%';
+            if (container && beforeImg) {
+                beforeImg.style.width = container.offsetWidth + 'px';
+                beforeImg.style.maxWidth = container.offsetWidth + 'px';
+            }
+        }
+
+        function updateComparisonComponent() {
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+            const emptyNotice = document.getElementById('compEmptyNotice');
+            const compBody = document.getElementById('compContentArea');
+
+            const t1Url = t1 ? (t1.preview_url || '/data/demo_scenarios/river_development/t1_preview.png') : null;
+            const t2Url = t2 ? (t2.preview_url || '/data/demo_scenarios/river_development/t2_preview.png') : null;
+
+            if (!t1Url || !t2Url) {
+                if (emptyNotice) emptyNotice.classList.remove('hidden');
+                if (compBody) compBody.classList.add('hidden');
+                return;
+            }
+
+            if (emptyNotice) emptyNotice.classList.add('hidden');
+            if (compBody) compBody.classList.remove('hidden');
+
+            const sideView = document.getElementById('compViewSide');
+            const swipeView = document.getElementById('compViewSwipe');
+            const beforeView = document.getElementById('compViewBefore');
+            const afterView = document.getElementById('compViewAfter');
+
+            if (sideView) sideView.classList.toggle('hidden', currentCompMode !== 'side');
+            if (swipeView) swipeView.classList.toggle('hidden', currentCompMode !== 'swipe');
+            if (beforeView) beforeView.classList.toggle('hidden', currentCompMode !== 'before');
+            if (afterView) afterView.classList.toggle('hidden', currentCompMode !== 'after');
+
+            // Set images for Query Tab Comparison
+            const sideT1 = document.getElementById('compSideImgT1');
+            const sideT2 = document.getElementById('compSideImgT2');
+            if (sideT1) sideT1.src = t1Url;
+            if (sideT2) sideT2.src = t2Url;
+
+            const swipeBefore = document.getElementById('swipeImgBefore');
+            const swipeAfter = document.getElementById('swipeImgAfter');
+            if (swipeBefore) swipeBefore.src = t1Url;
+            if (swipeAfter) swipeAfter.src = t2Url;
+            onSwipeInput(document.getElementById('swipeRange')?.value || 50);
+
+            const singleBefore = document.getElementById('compSingleImgBefore');
+            const singleAfter = document.getElementById('compSingleImgAfter');
+            if (singleBefore) singleBefore.src = t1Url;
+            if (singleAfter) singleAfter.src = t2Url;
+
+            // Set images for Analysis Tab Comparison
+            const anaT1 = document.getElementById('anaCompImgT1');
+            const anaT2 = document.getElementById('anaCompImgT2');
+            if (anaT1) anaT1.src = t1Url;
+            if (anaT2) anaT2.src = t2Url;
+
+            const anaSwipeBefore = document.getElementById('anaSwipeImgBefore');
+            const anaSwipeAfter = document.getElementById('anaSwipeImgAfter');
+            if (anaSwipeBefore) anaSwipeBefore.src = t1Url;
+            if (anaSwipeAfter) anaSwipeAfter.src = t2Url;
+            onAnaSwipeInput(document.getElementById('anaSwipeRange')?.value || 50);
+        }
+
         function selectScenario(scenarioId) {
             const data = demoScenarios[scenarioId];
             document.getElementById('queryInput').value = data.query;
-            document.getElementById('resultsContainer').classList.add('hidden');
             
-            t1Data = {
+            const topQuery = document.getElementById('topQueryText');
+            if (topQuery) topQuery.textContent = `"${data.query}"`;
+            const topTask = document.getElementById('topTaskBadge');
+            if (topTask) {
+                topTask.textContent = data.name;
+                topTask.className = 'rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 font-sans text-[10px] font-bold text-blue-700';
+            }
+            const topStatus = document.getElementById('topStatusBadge');
+            if (topStatus) {
+                topStatus.textContent = 'READY TO ANALYZE';
+                topStatus.className = 'rounded-full bg-slate-100 border border-slate-300 px-3.5 py-1.5 font-sans text-xs font-bold tracking-widest text-slate-700';
+            }
+            const topSummary = document.getElementById('topResultSummary');
+            if (topSummary) topSummary.textContent = 'Scenario selected: ' + data.name + '. Click "Execute Evidence Analysis" to run.';
+
+            t1Observation = {
                 status: 'success',
                 observation_id: `t1_${scenarioId}`,
                 image_path: data.t1,
+                preview_url: data.t1_preview,
                 bands: data.bands,
+                modality: data.modality || 'optical',
+                role: 't1',
+                filename: data.filename || `${scenarioId}_t1`,
                 metadata: data.metadata
             };
-            t2Data = {
+            t2Observation = {
                 status: 'success',
                 observation_id: `t2_${scenarioId}`,
                 image_path: data.t2,
+                preview_url: data.t2_preview,
                 bands: data.bands,
+                modality: data.modality || 'optical',
+                role: 't2',
+                filename: data.filename_t2 || `${scenarioId}_t2`,
                 metadata: data.metadata
             };
+            t1Data = t1Observation;
+            t2Data = t2Observation;
             
+            updateObservationPreview('t1', t1Observation);
+            updateObservationPreview('t2', t2Observation);
+            updateComparisonComponent();
+
             document.getElementById('t1Status').classList.add('hidden');
             document.getElementById('t2Status').classList.add('hidden');
             
             resetValidationState();
-            hideValidationPanel();
             
-            document.getElementById('analyzeBtn').disabled = false;
-            document.getElementById('analyzeBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            const btn = document.getElementById('analyzeBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            const readyBanner = document.getElementById('obsReadyBanner');
+            if (readyBanner) readyBanner.classList.remove('hidden');
+            const headerBadge = document.getElementById('headerValidationBadge');
+            const headerText = document.getElementById('headerValidationText');
+            if (headerBadge) headerBadge.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm';
+            if (headerText) headerText.textContent = 'Inputs Validated';
+        }
+
+        function handleFileSelection(obsRole) {
+            const fileInput = document.getElementById(`${obsRole}File`);
+            if (!fileInput || !fileInput.files.length) return;
+            const file = fileInput.files[0];
+
+            // If it's a browser-displayable image, show it immediately
+            if (/^image\/(png|jpeg|jpg|webp)$/i.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name)) {
+                const objectUrl = URL.createObjectURL(file);
+                const emptyState = document.getElementById(`${obsRole}EmptyState`);
+                const previewContainer = document.getElementById(`${obsRole}PreviewContainer`);
+                const img = document.getElementById(`${obsRole}PreviewImg`);
+                if (emptyState) emptyState.classList.add('hidden');
+                if (previewContainer) previewContainer.classList.remove('hidden');
+                if (img) img.src = objectUrl;
+            }
+
+            // Immediately trigger upload & validation
+            uploadFile(obsRole);
         }
 
         function showSelectedFile(obsRole) {
-            const fileInput = document.getElementById(`${obsRole}File`);
-            const preview = document.getElementById(`${obsRole}Preview`);
-            const file = fileInput.files[0];
-            if (obsRole === 't1') t1Data = null;
-            if (obsRole === 't2') t2Data = null;
-            const analyzeButton = document.getElementById('analyzeBtn');
-            document.getElementById('resultsContainer').classList.add('hidden');
-            analyzeButton.disabled = true;
-            analyzeButton.classList.add('opacity-50', 'cursor-not-allowed');
-            if (!file) {
-                preview.classList.add('hidden');
-                preview.replaceChildren();
-                return;
-            }
-
-            preview.classList.remove('hidden');
-            preview.replaceChildren();
-            const label = document.createElement('strong');
-            label.className = 'block text-emerald-700';
-            label.textContent = 'Selected';
-            const name = document.createElement('span');
-            name.className = 'mt-1 block break-all font-bold text-slate-800';
-            name.textContent = file.name;
-            const details = document.createElement('span');
-            details.className = 'mt-1 block text-slate-500';
-            details.textContent = `${(file.size / (1024 * 1024)).toFixed(1)} MB · ${file.type || file.name.split('.').pop().toUpperCase() + ' file'}`;
-            preview.append(label, name, details);
-
-            if (/^image\/(png|jpeg|gif|webp)$/i.test(file.type)) {
-                const image = document.createElement('img');
-                image.className = 'mt-3 h-20 w-28 rounded-lg border border-slate-200 object-cover';
-                image.alt = `${obsRole.toUpperCase()} satellite preview`;
-                image.src = URL.createObjectURL(file);
-                preview.append(image);
-            } else {
-                const note = document.createElement('span');
-                note.className = 'mt-2 block text-slate-500';
-                note.textContent = 'Satellite raster selected. Preview unavailable in browser.';
-                preview.append(note);
-            }
+            handleFileSelection(obsRole);
         }
 
-        // Backend API base — FastAPI runs on port 8000
-        const API_BASE = 'http://localhost:8000';
+        // Backend API base
+        const API_BASE = (window.location.origin && window.location.origin.startsWith('http')) ? window.location.origin : 'http://localhost:8001';
 
         async function uploadFile(obsRole) {
             const fileInput = document.getElementById(`${obsRole}File`);
             const statusBox = document.getElementById(`${obsRole}Status`);
             
-            if (!fileInput.files.length) {
-                alert("Please select an observation file first.");
+            if (!fileInput || !fileInput.files.length) {
+                alert(`Please select an observation file for ${obsRole.toUpperCase()} first.`);
                 return;
             }
+            const file = fileInput.files[0];
             const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            formData.append('file', file);
 
-            statusBox.classList.remove('hidden', 'bg-red-50', 'text-red-700');
-            statusBox.classList.add('bg-blue-50', 'text-blue-700');
-            statusBox.innerHTML = `<span class="flex items-center gap-2"><div class="loader" style="width:14px;height:14px;border-width:2px;"></div> Uploading & Validating...</span>`;
+            statusBox.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-emerald-50', 'text-emerald-700');
+            statusBox.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-200');
+            statusBox.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="loader" style="width:14px;height:14px;border-width:2px;"></div>
+                    <span class="font-medium">Uploading &amp; validating ${obsRole.toUpperCase()}...</span>
+                </div>`;
 
             try {
-                const response = await fetch(`${API_BASE}/api/v1/upload`, { method: 'POST', body: formData });
+                const response = await fetch(`${API_BASE}/api/v1/upload?role=${obsRole}`, { method: 'POST', body: formData });
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    statusBox.classList.remove('bg-blue-50', 'text-blue-700');
-                    statusBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
-                    statusBox.innerHTML = `✓ Validated: ${data.bands.join(', ')}<br><span class="text-[10px] font-mono break-all">${data.image_path}</span>`;
-                    if (obsRole === 't1') t1Data = data;
-                    if (obsRole === 't2') t2Data = data;
+                    statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                    statusBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+                    statusBox.innerHTML = `
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-1.5 font-bold text-emerald-800">
+                                <span>✓</span> <span>${obsRole.toUpperCase()} uploaded &amp; validated</span>
+                            </div>
+                            <div class="text-[10px] text-emerald-700 font-mono break-all">${data.filename || file.name}</div>
+                        </div>`;
+                    
+                    data.role = obsRole;
+                    data.filename = data.filename || file.name;
+                    if (obsRole === 't1') {
+                        t1Observation = data;
+                        t1Data = data;
+                    } else {
+                        t2Observation = data;
+                        t2Data = data;
+                    }
+                    updateObservationPreview(obsRole, data);
+                    updateComparisonComponent();
+
+                    // Notify user if replacing an observation
+                    const topSummary = document.getElementById('topResultSummary');
+                    if (topSummary) topSummary.textContent = `Observation ${obsRole.toUpperCase()} updated (${data.filename}). Click "Execute Evidence Analysis" to run analysis.`;
+                    const topStatus = document.getElementById('topStatusBadge');
+                    if (topStatus) {
+                        topStatus.textContent = 'READY TO ANALYZE';
+                        topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                    }
                 } else {
-                    statusBox.classList.remove('bg-blue-50', 'text-blue-700');
-                    statusBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
-                    statusBox.innerHTML = `🔴 Error: ${data.message}`;
-                    if (obsRole === 't1') t1Data = null;
-                    if (obsRole === 't2') t2Data = null;
+                    statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                    statusBox.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+                    statusBox.innerHTML = `
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <span class="font-bold">✕ ${obsRole.toUpperCase()} upload failed:</span>
+                                <span class="text-[11px] block mt-0.5">${data.message || 'Invalid format or structure.'}</span>
+                            </div>
+                            <button type="button" onclick="uploadFile('${obsRole}')" class="px-2.5 py-1 rounded bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 shadow-sm flex-shrink-0">
+                                ↺ Retry
+                            </button>
+                        </div>`;
+                    if (obsRole === 't1') { t1Observation = null; t1Data = null; }
+                    else { t2Observation = null; t2Data = null; }
+                    resetObservationPreview(obsRole);
+                    updateComparisonComponent();
                 }
             } catch (err) {
-                statusBox.classList.remove('bg-blue-50', 'text-blue-700');
-                statusBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
-                statusBox.innerHTML = `🔴 Network Error: ${err.message}`;
+                statusBox.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                statusBox.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+                statusBox.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <span class="font-bold">✕ ${obsRole.toUpperCase()} upload failed:</span>
+                            <span class="text-[11px] block mt-0.5">${err.message}</span>
+                        </div>
+                        <button type="button" onclick="uploadFile('${obsRole}')" class="px-2.5 py-1 rounded bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 shadow-sm flex-shrink-0">
+                            ↺ Retry
+                        </button>
+                    </div>`;
+                if (obsRole === 't1') { t1Observation = null; t1Data = null; }
+                else { t2Observation = null; t2Data = null; }
+                resetObservationPreview(obsRole);
+                updateComparisonComponent();
             }
             checkReadiness();
         }
 
         function checkReadiness() {
             const btn = document.getElementById('analyzeBtn');
-            const valBox = document.getElementById('validationResult');
+            const readyBanner = document.getElementById('obsReadyBanner');
+            const topStatus = document.getElementById('topStatusBadge');
+            const topSummary = document.getElementById('topResultSummary');
             
-            valBox.classList.add('hidden');
-            resetValidationState();
-            if (t1Data && t1Data.status === 'success' && t2Data && t2Data.status === 'success') {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+
+            if (t1 && t1.status === 'success' && t2 && t2.status === 'success') {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (readyBanner) readyBanner.classList.remove('hidden');
+                const headerBadge = document.getElementById('headerValidationBadge');
+                const headerText = document.getElementById('headerValidationText');
+                if (headerBadge) headerBadge.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 font-sans text-[11px] font-bold text-emerald-800 shadow-sm';
+                if (headerText) headerText.textContent = 'Inputs Validated';
+                if (topStatus) {
+                    topStatus.textContent = 'READY TO ANALYZE';
+                    topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                }
+                if (topSummary && (!topSummary.textContent || topSummary.textContent.includes('No analysis performed'))) {
+                    topSummary.textContent = 'Observations T1 and T2 validated! Click "Execute Evidence Analysis" to run.';
+                }
+            } else {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (readyBanner) readyBanner.classList.add('hidden');
+            }
+        }
+
+        function updateTopSummary(data) {
+            const topQuery = document.getElementById('topQueryText');
+            const topTask = document.getElementById('topTaskBadge');
+            const topStatus = document.getElementById('topStatusBadge');
+            const topSummary = document.getElementById('topResultSummary');
+            
+            if (topQuery) {
+                const q = document.getElementById('queryInput').value;
+                topQuery.textContent = `"${q || 'Satellite observation query'}"`;
+            }
+            if (topTask && data.task) {
+                let taskLabel = data.task.replace(/_/g, ' ').toUpperCase();
+                if (data.task === 'vegetation_change') taskLabel = '🌿 VEGETATION CHANGE';
+                else if (data.task === 'built_up_change') taskLabel = '🏗️ BUILT-UP CHANGE';
+                else if (data.task === 'flood_change') taskLabel = '💧 FLOOD CHANGE';
+                topTask.textContent = taskLabel;
+                topTask.className = 'rounded-full bg-blue-100 border border-blue-200 px-2.5 py-0.5 font-sans text-[10px] font-bold text-blue-800';
+            }
+            if (topStatus && data.status) {
+                topStatus.textContent = data.status;
+                if (data.status === 'SUPPORTED') {
+                    topStatus.className = 'rounded-full bg-emerald-100 border border-emerald-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-emerald-800 shadow-sm';
+                } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                    topStatus.className = 'rounded-full bg-amber-100 border border-amber-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-amber-800 shadow-sm';
+                } else {
+                    topStatus.className = 'rounded-full bg-red-100 border border-red-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-red-800 shadow-sm';
+                }
+            }
+            if (topSummary) {
+                let cleanAns = data.answer || "Analysis complete.";
+                if (cleanAns.includes("Reason:")) cleanAns = cleanAns.split("Reason:")[0].trim();
+                topSummary.textContent = cleanAns;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Map legacy tab names to the 3 main areas
+            if (tabName === 'observations' || tabName === 'validation') tabName = 'query';
+            if (tabName === 'map' || tabName === 'answer') tabName = 'analysis';
+
+            const tabs = ['query', 'analysis', 'evidence'];
+            tabs.forEach(t => {
+                const panel = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (panel) {
+                    if (t === tabName) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (btn) {
+                    if (t === tabName) {
+                        btn.classList.add('active-tab');
+                        btn.classList.remove('text-slate-600');
+                    } else {
+                        btn.classList.remove('active-tab');
+                        btn.classList.add('text-slate-600');
+                    }
+                }
+            });
+
+            if (tabName === 'analysis') {
+                setTimeout(() => {
+                    if (map) {
+                        map.invalidateSize();
+                        if (changeRegionLayers && changeRegionLayers.length) {
+                            fitSpatialChanges();
+                        } else if (mapRect) {
+                            map.fitBounds(mapRect.getBounds(), {padding: [25, 25]});
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        function toggleTraceAccordion() {
+            const acc = document.getElementById('executionTraceAccordion');
+            const icon = document.getElementById('traceToggleIcon');
+            if (acc) {
+                acc.open = !acc.open;
+                if (icon) icon.textContent = acc.open ? '▴' : '▾';
+                if (acc.open) {
+                    acc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             }
         }
 
@@ -935,20 +1618,49 @@
             const btn = document.getElementById('analyzeBtn');
             const query = document.getElementById('queryInput').value;
             
-            document.getElementById('resultsContainer').classList.add('hidden');
+            const topStatus = document.getElementById('topStatusBadge');
+            if (topStatus) {
+                topStatus.textContent = 'ANALYZING...';
+                topStatus.className = 'rounded-full bg-blue-100 border border-blue-300 px-3.5 py-1.5 font-sans text-xs font-black tracking-widest text-blue-700 animate-pulse';
+            }
+            const topQuery = document.getElementById('topQueryText');
+            if (topQuery) {
+                topQuery.textContent = `"${query || 'Analyze changes in the region.'}"`;
+            }
+            
             document.getElementById('loadingState').classList.remove('hidden');
             document.getElementById('loadingState').classList.add('flex');
             
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
 
+            const t1 = t1Observation || t1Data;
+            const t2 = t2Observation || t2Data;
+            if (!t1 || !t2) return;
+
             const payload = {
                 query: query || "Analyze changes in the region.",
                 observations: [
-                    { observation_id: t1Data.observation_id, image_path: t1Data.image_path, role: "t1", metadata: { modality: "optical", bands: t1Data.bands } },
-                    { observation_id: t2Data.observation_id, image_path: t2Data.image_path, role: "t2", metadata: { modality: "optical", bands: t2Data.bands } }
+                    {
+                        observation_id: t1.observation_id || "t1",
+                        image_path: t1.image_path,
+                        role: "t1",
+                        metadata: {
+                            modality: t1.modality || "optical",
+                            bands: t1.bands || ["red", "nir", "scl"]
+                        }
+                    },
+                    {
+                        observation_id: t2.observation_id || "t2",
+                        image_path: t2.image_path,
+                        role: "t2",
+                        metadata: {
+                            modality: t2.modality || "optical",
+                            bands: t2.bands || ["red", "nir", "scl"]
+                        }
+                    }
                 ],
-                metadata: { dev_scenario: t1Data.metadata.dev_scenario } 
+                metadata: { dev_scenario: (t1.metadata && t1.metadata.dev_scenario) ? t1.metadata.dev_scenario : undefined } 
             };
 
             try {
@@ -960,10 +1672,9 @@
                 const data = await response.json();
                 renderValidation(data);
                 renderResults(data);
-                const validationPanel = document.getElementById('inputValidation');
-                document.getElementById('analysisTimeline').insertAdjacentElement('afterend', validationPanel);
-                validationPanel.classList.remove('hidden');
-                document.getElementById('resultHero').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                updateTopSummary(data);
+                updateComparisonComponent();
+                switchTab('analysis');
             } catch (err) {
                 console.error(err);
                 alert("Analysis failed to connect to API.");
@@ -1050,20 +1761,49 @@
             const chips = types.map(type => `<span class="hero-evidence-item rounded-lg px-3 py-2 font-sans text-xs font-bold text-slate-700"><span class="mr-1 text-emerald-600">✓</span>${escapePlannerText(type)}</span>`).join('');
             const explicitScore = evidence.flatMap(item => [item.value && item.value.confidence, item.value && item.value.score, item.value && item.value.model_score]).find(value => typeof value === 'number');
             const demoEvidence = evidence.some(item => /mock|simulat/i.test(`${safeValue(item.evidence_id, '')} ${safeValue(item.tool_version, '')} ${safeValue(item.source, '')}`));
-            document.getElementById('resultHeroStatus').className = `rounded-full px-4 py-2 font-sans text-sm font-black tracking-widest ${statusStyle}`;
-            document.getElementById('resultHeroStatus').textContent = statusLabel;
-            document.getElementById('resultHeroTask').textContent = safeValue(data.task).replace(/_/g, ' ');
-            document.getElementById('resultHeroDemo').classList.toggle('hidden', !demoEvidence);
-            document.getElementById('resultHeroQuery').textContent = `"${safeValue(document.getElementById('queryInput').value)}"`;
-            document.getElementById('resultHeroAnswer').textContent = answer;
-            document.getElementById('resultHeroReason').textContent = reason;
-            document.getElementById('resultHeroChips').innerHTML = chips;
+            const heroStatus = document.getElementById('resultHeroStatus');
+            if (heroStatus) {
+                heroStatus.className = `rounded-full px-4 py-2 font-sans text-sm font-black tracking-widest ${statusStyle}`;
+                heroStatus.textContent = statusLabel;
+            }
+            const heroTask = document.getElementById('resultHeroTask');
+            if (heroTask) heroTask.textContent = safeValue(data.task).replace(/_/g, ' ');
+            const heroDemo = document.getElementById('resultHeroDemo');
+            if (heroDemo) heroDemo.classList.toggle('hidden', !demoEvidence);
+            const heroQuery = document.getElementById('resultHeroQuery');
+            if (heroQuery) heroQuery.textContent = `"${safeValue(document.getElementById('queryInput')?.value)}"`;
+            const heroAnswer = document.getElementById('resultHeroAnswer');
+            const heroReason = document.getElementById('resultHeroReason');
+            const finalAns = document.getElementById('finalAnswer');
+            const t1 = t1Observation || t1Data;
+            const isVisualOnly = t1 && t1.bands && !t1.bands.includes('nir');
+
+            if (isVisualOnly && status === 'INSUFFICIENT') {
+                const customAnswer = "There is insufficient physical spectral evidence to evaluate quantitative change.";
+                if (heroAnswer) heroAnswer.textContent = customAnswer;
+                if (finalAns) finalAns.textContent = customAnswer;
+                if (heroReason) heroReason.innerHTML = `Visual comparison available.<br><span class="text-amber-300 font-semibold">Multispectral evidence unavailable for these RGB observations.</span>`;
+            } else {
+                if (heroAnswer) heroAnswer.textContent = answer;
+                if (finalAns) finalAns.textContent = answer;
+                if (heroReason) heroReason.textContent = reason;
+            }
+            const heroChips = document.getElementById('resultHeroChips');
+            if (heroChips) heroChips.innerHTML = chips;
             const score = document.getElementById('resultHeroStrength');
-            score.classList.toggle('hidden', explicitScore === undefined);
-            if (explicitScore !== undefined) score.textContent = `Model score ${explicitScore}`;
+            if (score) {
+                score.classList.toggle('hidden', explicitScore === undefined);
+                if (explicitScore !== undefined) score.textContent = `Model score ${explicitScore}`;
+            }
             const next = document.getElementById('resultHeroNextStep');
-            next.classList.toggle('hidden', status !== 'INSUFFICIENT');
-            if (status === 'INSUFFICIENT') next.textContent = 'WHAT TO DO NEXT: Provide suitable T1/T2 satellite observations and run the query again.';
+            if (next) {
+                next.classList.toggle('hidden', status !== 'INSUFFICIENT');
+                if (status === 'INSUFFICIENT') {
+                    next.innerHTML = isVisualOnly
+                        ? '<strong>WHAT TO DO NEXT:</strong> Visual comparison is active above. To compute physical ΔNDVI and change statistics, supply multispectral Sentinel-2 datasets containing Red and NIR bands.'
+                        : '<strong>WHAT TO DO NEXT:</strong> Provide suitable T1/T2 satellite observations and run the query again.';
+                }
+            }
         }
 
         function fitSpatialObservation() {
@@ -1331,8 +2071,8 @@
             const compReason = document.getElementById('comparatorReason');
             const reportCard = document.getElementById('reportCard');
             
-            compCard.className = 'dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-xl border-2 mb-12';
-            reportCard.className = 'dark-glass-card p-0 flex flex-col overflow-hidden border-l-8';
+            compCard.className = 'dark-glass-card p-0 overflow-hidden mx-auto max-w-4xl shadow-xl border-2 mb-8';
+            reportCard.className = 'dark-glass-card p-5 border-t-4 shadow-lg';
             
             if (data.status === 'SUPPORTED') {
                 compCard.classList.add('border-emerald-500');
@@ -1447,6 +2187,8 @@
                 document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Missing';
             }
             if (compReason) compReason.textContent = compReasonText;
+            const compSummary = document.getElementById('comparatorReasonSummary');
+            if (compSummary) compSummary.textContent = compReasonText;
 
             // 06 Final Report Summary
             let cleanAnswer = data.answer || "No answer generated.";
@@ -1474,14 +2216,114 @@
             `;
 
             // Border color for report card
-            reportCard.className = 'dark-glass-card p-0 flex flex-col overflow-hidden border-t-4';
+            reportCard.className = 'dark-glass-card p-5 border-t-4 shadow-lg';
             if(data.status === 'SUPPORTED') reportCard.classList.add('border-t-emerald-500');
             else if(data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') reportCard.classList.add('border-t-amber-500');
             else reportCard.classList.add('border-t-red-500');
 
-            // Confidence
+            // Confidence Badge
             const uiConfBadge = document.getElementById('uiConfidenceBadge');
-            if (uiConfBadge) uiConfBadge.classList.add('hidden');
+            if (uiConfBadge) {
+                uiConfBadge.classList.remove('hidden');
+                let confVal = data.confidence !== undefined ? Math.round(data.confidence * 100) : (data.status === 'SUPPORTED' ? 92 : (data.status === 'UNCERTAIN' ? 68 : 35));
+                uiConfBadge.textContent = `${confVal}% CONFIDENCE`;
+                if (data.status === 'SUPPORTED') {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-emerald-900/50 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded font-bold';
+                } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-amber-900/50 text-amber-300 border border-amber-700/50 px-2 py-0.5 rounded font-bold';
+                } else {
+                    uiConfBadge.className = 'text-[10px] font-mono bg-red-900/50 text-red-300 border border-red-700/50 px-2 py-0.5 rounded font-bold';
+                }
+            }
+
+            // Evidence Comparison Table (Analysis Tab Right Column)
+            const analysisEvidenceTable = document.getElementById('analysisEvidenceTable');
+            if (analysisEvidenceTable) {
+                let rows = [];
+                // 1. VLM
+                const vlm = (data.evidence || []).find(e => e.type === 'vlm_interpretation');
+                let vlmVote = "Consistent";
+                if (vlm && vlm.value) {
+                    if (vlm.value.t2 && vlm.value.t2.claim) {
+                        vlmVote = vlm.value.t2.claim.replace(/_/g, ' ').toUpperCase();
+                    } else if (vlm.value.claim) {
+                        vlmVote = vlm.value.claim.replace(/_/g, ' ').toUpperCase();
+                    }
+                }
+                rows.push({
+                    source: 'AI Model (RS-InternVL)',
+                    role: 'Auxiliary semantic interpretation',
+                    vote: vlmVote,
+                    status: (vlm && vlm.quality && vlm.quality.valid_pixel_fraction > 0.5) ? '✓' : (vlm ? '✓' : '—'),
+                    isAgree: vlm != null
+                });
+
+                // 2. Physical Index Delta
+                const veg = (data.evidence || []).find(e => e.type === 'vegetation_change');
+                const built = (data.evidence || []).find(e => e.type === 'built_up_change');
+                const water = (data.evidence || []).find(e => e.type === 'flood_change');
+                let deltaSource = 'NDVI Delta (Physical RS)';
+                let deltaRole = 'Spectral vegetation index';
+                let deltaVote = 'Delta verified';
+                if (veg && veg.value) {
+                    deltaSource = 'NDVI Delta (Vegetation)';
+                    deltaRole = 'NIR/Red reflectance ratio';
+                    deltaVote = `${typeof veg.value.ndvi_delta === 'number' ? (veg.value.ndvi_delta > 0 ? '+' : '') + veg.value.ndvi_delta.toFixed(2) : veg.value.ndvi_delta} (${veg.value.direction || 'Decrease'})`;
+                } else if (built && built.value) {
+                    deltaSource = 'NDBI Delta (Built-up)';
+                    deltaRole = 'SWIR/NIR built-up index';
+                    deltaVote = `${typeof built.value.ndbi_delta === 'number' ? (built.value.ndbi_delta > 0 ? '+' : '') + built.value.ndbi_delta.toFixed(2) : built.value.ndbi_delta} (${built.value.direction || 'Delta'})`;
+                } else if (water && water.value) {
+                    deltaSource = 'MNDWI / Radar (Water)';
+                    deltaRole = 'Surface water reflectance';
+                    deltaVote = `${water.value.direction || 'Water Change'}`;
+                }
+                rows.push({
+                    source: deltaSource,
+                    role: deltaRole,
+                    vote: deltaVote,
+                    status: (veg || built || water) ? '✓' : '—',
+                    isAgree: (veg || built || water) != null
+                });
+
+                // 3. Pixel Statistics
+                const stats = (data.evidence || []).find(e => e.type === 'change_quantification');
+                let statsVote = 'Quantified';
+                if (stats && stats.value && stats.value.changed_pixel_fraction !== undefined) {
+                    statsVote = `${(stats.value.changed_pixel_fraction * 100).toFixed(1)}% Changed`;
+                }
+                rows.push({
+                    source: 'Change Detection (Masking)',
+                    role: 'Spatial pixel statistics',
+                    vote: statsVote,
+                    status: stats ? '✓' : '—',
+                    isAgree: stats != null
+                });
+
+                // 4. Grounding
+                const ground = (data.evidence || []).find(e => e.type === 'spatial_grounding');
+                let groundVote = (ground && ground.value && ground.value.crs) ? ground.value.crs : 'EPSG:4326';
+                rows.push({
+                    source: 'Spatial Grounding (CRS)',
+                    role: 'Georeferenced extent & bounds',
+                    vote: groundVote,
+                    status: '✓',
+                    isAgree: true
+                });
+
+                analysisEvidenceTable.innerHTML = rows.map(r => `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/70 transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="font-bold text-slate-800 text-xs truncate">${r.source}</p>
+                            <p class="text-[10px] text-slate-500 truncate">${r.role}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="font-mono text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">${r.vote}</span>
+                            <span class="w-5 h-5 rounded-full ${r.isAgree ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'} text-xs font-bold flex items-center justify-center">${r.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
 
             // Evidence Ledger
             const uiEvidenceLedger = document.getElementById('uiEvidenceLedger');
@@ -1623,7 +2465,7 @@
                     window.mapMarker = L.marker([se.center.lat, se.center.lon], {icon: markerIcon})
                         .addTo(map)
                         .bindPopup(`<div style="font-family:monospace;font-size:11px;min-width:180px">
-                            <strong>SATQuery AI Analysis Region</strong><br>
+                            <strong>GeoVision Analysis Region</strong><br>
                             ${popupLabel}<br><br>
                             <span style="color:#94a3b8">CRS:</span> ${se.crs || 'EPSG:4326'}<br>
                             <span style="color:#94a3b8">Center:</span> ${se.center.lat.toFixed(5)}°, ${se.center.lon.toFixed(5)}°

@@ -1,4 +1,4 @@
-"""Orchestrates SATQuery AI components for a single request.
+"""Orchestrates GeoVision components for a single request.
 
 Coordinates:
 - TaskClassifier
@@ -28,8 +28,8 @@ from trace.trace_store import TraceStore
 logger = logging.getLogger(__name__)
 
 
-class SATQueryOrchestrator:
-    """Coordinates a single SATQuery analysis request."""
+class GeoVisionOrchestrator:
+    """Coordinates a single GeoVision analysis request."""
 
     def __init__(self, scenario: MockScenario = MockScenario.NORMAL, runner=None):
         """Initialize the orchestrator with clean state per request."""
@@ -59,6 +59,8 @@ class SATQueryOrchestrator:
         
         for obs in query.observations:
             modalities.add(obs.metadata.modality)
+            if obs.metadata.modality == Modality.MULTISPECTRAL or obs.metadata.modality == "multispectral":
+                modalities.add(Modality.OPTICAL)
             for b in obs.metadata.bands:
                 bands.add(b.lower())
 

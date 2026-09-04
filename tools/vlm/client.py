@@ -1,10 +1,19 @@
 import json
-from typing import Protocol, List
+from typing import Protocol, List, Any, Optional
 from schemas.vlm import VLMResult, VLMClaimType, VLMContext
 
 class VLMClient(Protocol):
     """Abstract interface for a Vision-Language Model client."""
     def analyze(self, image_paths: List[str], query: str, context: VLMContext) -> VLMResult:
+        ...
+
+    def analyze_observation(
+        self,
+        image_s1: Any,
+        image_s2: Any,
+        query: str,
+        context: Optional[VLMContext] = None,
+    ) -> VLMResult:
         ...
 
 class MockVLMClient(VLMClient):
@@ -60,3 +69,35 @@ class MockVLMClient(VLMClient):
                 confidence=0.75,
                 reasoning=f"Generic change detected for scenario: {self.scenario}"
             )
+
+    def analyze_observation(
+        self,
+        image_s1: Any,
+        image_s2: Any,
+        query: str,
+        context: Optional[VLMContext] = None,
+    ) -> VLMResult:
+        if self.scenario == "MALFORMED_RESPONSE":
+            raise ValueError("VLM returned malformed JSON output.")
+
+        lower = (query or "").lower()
+        if "vegetation" in lower or "forest" in lower:
+            claim = VLMClaimType.VEGETATION_CHANGE
+            reasoning = "Vegetation and canopy features observed across the observation patch."
+        elif "urban" in lower or "built-up" in lower or "built up" in lower:
+            claim = VLMClaimType.BUILT_UP_CHANGE
+            reasoning = "Built-up structures and urban surface features identified in patch."
+        elif "water" in lower:
+            claim = VLMClaimType.GENERAL_CHANGE
+            reasoning = "Water body extent observed in patch."
+        else:
+            claim = VLMClaimType.GENERAL_CHANGE
+            reasoning = f"Semantic scene interpretation for: {query}"
+
+        conf = 0.30 if self.scenario == "LOW_CONFIDENCE" else 0.88
+        return VLMResult(
+            claim=claim,
+            confidence=conf,
+            reasoning=reasoning,
+        )
+

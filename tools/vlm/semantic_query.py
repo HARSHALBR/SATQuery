@@ -1,4 +1,4 @@
-"""Convert temporal SATQuery questions into static semantic VLM questions."""
+"""Convert temporal GeoVision questions into static semantic VLM questions."""
 
 import re
 

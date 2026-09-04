@@ -1,4 +1,4 @@
-"""Tool-related schemas for SATQuery AI.
+"""Tool-related schemas for GeoVision.
 
 Defines the tool contract, machine-readable applicability conditions,
 and the result model returned after executing a tool.

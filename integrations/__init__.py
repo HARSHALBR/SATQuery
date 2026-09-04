@@ -1,1 +1,1 @@
-"""SATQuery AI — Integration clients for VLM, RS tools, and frontend."""
+"""GeoVision — Integration clients for VLM, RS tools, and frontend."""

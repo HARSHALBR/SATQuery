@@ -1,4 +1,4 @@
-"""Evidence Comparator for SATQuery AI.
+"""Evidence Comparator for GeoVision.
 
 Determines whether collected evidence supports, contradicts, or is
 insufficient for the claim extracted by the TaskClassifier.
@@ -39,18 +39,18 @@ _MAX_CLOUD_COVER = 0.50
 
 _CLAIM_EVIDENCE_MAP: dict[str, list[str]] = {
     # Vegetation claims require NDVI evidence + change quantification.
-    "vegetation_decrease": ["vlm_interpretation", "vegetation_change", "change_quantification"],
-    "vegetation_increase": ["vlm_interpretation", "vegetation_change", "change_quantification"],
-    "vegetation_change":   ["vlm_interpretation", "vegetation_change", "change_quantification"],
+    "vegetation_decrease": ["vlm_interpretation", "vegetation_change", "change_quantification", "spatial_grounding"],
+    "vegetation_increase": ["vlm_interpretation", "vegetation_change", "change_quantification", "spatial_grounding"],
+    "vegetation_change":   ["vlm_interpretation", "vegetation_change", "change_quantification", "spatial_grounding"],
     # Built-up claims require NDBI evidence + change quantification.
-    "built_up_increase":   ["vlm_interpretation", "built_up_change", "change_quantification"],
-    "built_up_decrease":   ["vlm_interpretation", "built_up_change", "change_quantification"],
-    "built_up_change":     ["vlm_interpretation", "built_up_change", "change_quantification"],
+    "built_up_increase":   ["vlm_interpretation", "built_up_change", "change_quantification", "spatial_grounding"],
+    "built_up_decrease":   ["vlm_interpretation", "built_up_change", "change_quantification", "spatial_grounding"],
+    "built_up_change":     ["vlm_interpretation", "built_up_change", "change_quantification", "spatial_grounding"],
     # SAR cross-check claims require SAR amplitude change evidence.
-    "sar_cross_check":     ["vlm_interpretation", "sar_amplitude_change"],
+    "sar_cross_check":     ["vlm_interpretation", "sar_amplitude_change", "spatial_grounding"],
     # Generic change claims.
-    "change_detected":     ["vlm_interpretation", "change_quantification"],
-    "general_change":      ["vlm_interpretation", "change_quantification"],
+    "change_detected":     ["vlm_interpretation", "change_quantification", "spatial_grounding"],
+    "general_change":      ["vlm_interpretation", "change_quantification", "spatial_grounding"],
 }
 
 _CLAIM_OPTIONAL_EVIDENCE_MAP: dict[str, list[str]] = {

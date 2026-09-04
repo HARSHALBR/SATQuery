@@ -1,4 +1,4 @@
-"""Tool registry for SATQuery AI.
+"""Tool registry for GeoVision.
 
 Provides the ToolRegistry class that manages tool definitions,
 evaluates applicability against a structured execution context,

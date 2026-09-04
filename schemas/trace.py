@@ -1,4 +1,4 @@
-"""Execution-trace schemas for SATQuery AI.
+"""Execution-trace schemas for GeoVision.
 
 Defines the per-step trace record and the aggregate execution trace
 that forms the audit trail for every query.

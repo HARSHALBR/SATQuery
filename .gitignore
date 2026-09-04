@@ -21,3 +21,20 @@ Thumbs.db
 # Dynamic Generated Data & Temporary Workspaces
 Frontend/data/analyses/
 Frontend/data/sample/_aligned_temp/
+Frontend/data/demo_uploads/
+uploads/
+test_uploads/
+*.tif.aux.xml
+*.log
+WhatsApp Image*.jpeg
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/

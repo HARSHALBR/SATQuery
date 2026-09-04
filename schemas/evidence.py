@@ -1,4 +1,4 @@
-"""Evidence-related schemas for SATQuery AI.
+"""Evidence-related schemas for GeoVision.
 
 Defines the evidence record, quality report, and provenance models
 used throughout the evidence pipeline.

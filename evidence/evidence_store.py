@@ -1,4 +1,4 @@
-"""Evidence Store for SATQuery AI.
+"""Evidence Store for GeoVision.
 
 Provides an authoritative in-memory store for EvidenceRecord objects
 produced by the execution layer. The store organizes, preserves,

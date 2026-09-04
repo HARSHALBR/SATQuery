@@ -1,4 +1,4 @@
-"""Task classifier for SATQuery AI.
+"""Task classifier for GeoVision.
 
 Converts a natural-language satellite-imagery query into a structured
 ParsedQuery object.  The classifier is deterministic — it uses keyword

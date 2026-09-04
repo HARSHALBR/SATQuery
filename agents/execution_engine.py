@@ -1,4 +1,4 @@
-"""Execution Engine for SATQuery AI.
+"""Execution Engine for GeoVision.
 
 Consumes a WorkflowPlan from the Constrained Planner and executes its
 DAG of WorkflowSteps using a dependency-injected ToolRunner interface.
@@ -62,7 +62,15 @@ class ExecutionEngine:
             # 1. Check dependencies
             deps_failed = False
             for dep_idx in step.depends_on:
-                if step_statuses.get(dep_idx) in [ToolStatus.ERROR, ToolStatus.UNAVAILABLE, ToolStatus.SKIPPED]:
+                dep_status = step_statuses.get(dep_idx)
+                if dep_status == ToolStatus.ERROR:
+                    deps_failed = True
+                    break
+                elif dep_status in [ToolStatus.UNAVAILABLE, ToolStatus.SKIPPED]:
+                    # Terminal synthesis tools (compare_evidence, generate_response) proceed
+                    # if other parallel tools were able to run.
+                    if step.tool in ["compare_evidence", "generate_response"]:
+                        continue
                     deps_failed = True
                     break
             
@@ -126,7 +134,7 @@ class ExecutionEngine:
                 output_summary=str(result.output) if result.output else None
             ))
             
-            if result.status in [ToolStatus.ERROR, ToolStatus.UNAVAILABLE]:
+            if result.status == ToolStatus.ERROR:
                 workflow_failed = True
         
         # 6. Finalize Trace and Plan
@@ -134,7 +142,8 @@ class ExecutionEngine:
         trace.completed_at = _utcnow()
         trace.total_duration_ms = int((trace.completed_at - started_at).total_seconds() * 1000)
         
-        if workflow_failed:
+        has_any_success = any(s.status == ToolStatus.SUCCESS for s in trace_steps)
+        if workflow_failed or not has_any_success:
             plan.status = WorkflowStatus.FAILED
         else:
             plan.status = WorkflowStatus.COMPLETED

@@ -1,4 +1,4 @@
-"""Mock Tool Runner for SATQuery AI Phase 6.
+"""Mock Tool Runner for GeoVision Phase 6.
 
 Implements the ToolRunner Protocol to allow testing the ExecutionEngine
 without real VLM or remote-sensing models. Provides deterministic,

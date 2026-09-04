@@ -1,4 +1,4 @@
-"""Query-related schemas for SATQuery AI.
+"""Query-related schemas for GeoVision.
 
 Defines the structured representations for user queries, image metadata,
 observation inputs, and the parsed query that drives the planner.
@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 
 class TaskType(str, Enum):
-    """Supported task types in the SATQuery system."""
+    """Supported task types in the GeoVision system."""
 
     SINGLE_IMAGE_VQA = "single_image_vqa"
     CAPTIONING = "captioning"

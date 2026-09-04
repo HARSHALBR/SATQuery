@@ -1,4 +1,4 @@
-"""Trace Store for SATQuery AI.
+"""Trace Store for GeoVision.
 
 Provides an authoritative in-memory store for ExecutionTrace objects
 produced by the ExecutionEngine.

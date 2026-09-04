@@ -1,1 +1,1 @@
-"""SATQuery AI — Evidence store, comparator, and provenance tracking."""
+"""GeoVision — Evidence store, comparator, and provenance tracking."""
