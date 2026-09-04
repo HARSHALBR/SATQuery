@@ -912,8 +912,8 @@
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Evidence Comparator &amp; Decision Consensus</h3>
                     </div>
                     <div class="p-6">
-                        <div id="uiComparatorDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm text-slate-300"></div>
-                        <div class="text-center border-t border-slate-700/50 pt-6">
+                        <div id="uiComparatorDetails" class="w-full mb-2 text-sm text-slate-300"></div>
+                        <div class="text-center pt-2">
                             <h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-4" id="comparatorBadge">...</h2>
                             <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 inline-block max-w-2xl text-left shadow-sm">
                                 <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1" id="comparatorReasonTitle">WHY?</span>
@@ -2115,22 +2115,39 @@
             
             if (data.status === 'SUPPORTED') {
                 uiCompDetails.innerHTML = `
-                    <div class="grid grid-cols-2 gap-8 relative max-w-2xl mx-auto">
-                        <div class="text-center p-4 bg-emerald-900/10 border border-emerald-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">VLM Conclusion</span>
-                            <span class="text-white font-bold block">${vlmSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-emerald-500/50"></div>
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-purple-900/10 border border-purple-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-1">VLM Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-emerald-900/10 border border-emerald-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">RS Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-center p-4 bg-emerald-900/10 border border-emerald-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">RS Conclusion</span>
-                            <span class="text-white font-bold block">${rsSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-emerald-500/50"></div>
-                        </div>
-                    </div>
-                    <div class="flex justify-center mt-6 max-w-2xl mx-auto">
-                        <div class="w-1/2 border-t-2 border-emerald-500/50 relative">
-                            <div class="absolute left-1/2 -top-3 -ml-10 w-20 text-center bg-emerald-500 text-black text-[10px] font-bold px-2 py-0.5 rounded">AGREEMENT</div>
-                            <div class="absolute left-1/2 top-0 w-0.5 h-6 bg-emerald-500/50"></div>
+
+                        <!-- Connector Tree & Agreement Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 h-0.5 bg-emerald-500/70"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-emerald-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-500 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>✓</span> AGREEMENT
+                                </span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2139,22 +2156,39 @@
                 document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Agreement';
             } else if (data.status === 'UNCERTAIN' || data.status === 'CONFLICTING') {
                 uiCompDetails.innerHTML = `
-                    <div class="grid grid-cols-2 gap-8 relative max-w-2xl mx-auto">
-                        <div class="text-center p-4 bg-amber-900/10 border border-amber-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">VLM Conclusion</span>
-                            <span class="text-white font-bold block">${vlmSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-amber-500/50"></div>
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-amber-900/10 border border-amber-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">VLM Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-amber-900/10 border border-amber-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">RS Conclusion</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-center p-4 bg-amber-900/10 border border-amber-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">RS Conclusion</span>
-                            <span class="text-white font-bold block">${rsSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-amber-500/50"></div>
-                        </div>
-                    </div>
-                    <div class="flex justify-center mt-6 max-w-2xl mx-auto">
-                        <div class="w-1/2 border-t-2 border-amber-500/50 border-dashed relative">
-                            <div class="absolute left-1/2 -top-3 -ml-10 w-20 text-center bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded">CONFLICT</div>
-                            <div class="absolute left-1/2 top-0 w-0.5 h-6 bg-amber-500/50"></div>
+
+                        <!-- Connector Tree & Conflict Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 border-t-2 border-dashed border-amber-500/80"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-amber-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-amber-500 text-slate-950 text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>⚠</span> CONFLICT
+                                </span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2163,22 +2197,39 @@
                 document.getElementById('comparatorReasonTitle').innerHTML = 'Evidence Conflict / Weak Agreement';
             } else {
                 uiCompDetails.innerHTML = `
-                    <div class="grid grid-cols-2 gap-8 relative max-w-2xl mx-auto">
-                        <div class="text-center p-4 bg-red-900/10 border border-red-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">VLM Path</span>
-                            <span class="text-white font-bold block">${vlmSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-red-500/50"></div>
+                    <div class="max-w-2xl mx-auto w-full pt-1 pb-2">
+                        <!-- Dual Evidence Summary Cards -->
+                        <div class="grid grid-cols-2 relative">
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-red-900/10 border border-red-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest block mb-1">VLM Path</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${vlmSummary}</span>
+                                </div>
+                            </div>
+                            <div class="px-3">
+                                <div class="text-center p-4 bg-red-900/10 border border-red-800/30 rounded-2xl relative shadow-sm">
+                                    <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest block mb-1">RS Path</span>
+                                    <span class="text-white font-extrabold block text-sm leading-snug">${rsSummary}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-center p-4 bg-red-900/10 border border-red-900/30 rounded-xl relative">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">RS Path</span>
-                            <span class="text-white font-bold block">${rsSummary}</span>
-                            <div class="absolute -bottom-6 left-1/2 w-0.5 h-6 bg-red-500/50"></div>
-                        </div>
-                    </div>
-                    <div class="flex justify-center mt-6 max-w-2xl mx-auto">
-                        <div class="w-1/2 border-t-2 border-red-500/50 border-dotted relative">
-                            <div class="absolute left-1/2 -top-3 -ml-12 w-24 text-center bg-red-500 text-black text-[10px] font-bold px-2 py-0.5 rounded">MISSING</div>
-                            <div class="absolute left-1/2 top-0 w-0.5 h-6 bg-red-500/50"></div>
+
+                        <!-- Connector Tree & Missing Junction -->
+                        <div class="relative w-full h-14 pointer-events-none">
+                            <!-- Drop line from VLM Card (centered at 25%) -->
+                            <div class="absolute top-0 left-1/4 w-0.5 h-6 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Drop line from RS Card (centered at 75%) -->
+                            <div class="absolute top-0 left-3/4 w-0.5 h-6 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Crossbar spanning from 25% to 75% -->
+                            <div class="absolute top-6 left-1/4 w-1/2 border-t-2 border-dotted border-red-500/80"></div>
+                            <!-- Stem down to verdict (centered at 50%) -->
+                            <div class="absolute top-6 left-1/2 w-0.5 h-8 bg-red-500/70 -translate-x-1/2"></div>
+                            <!-- Consensus Badge centered at 50% on crossbar -->
+                            <div class="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+                                <span class="inline-flex items-center gap-1.5 bg-red-500 text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-lg tracking-wider">
+                                    <span>❌</span> INSUFFICIENT
+                                </span>
+                            </div>
                         </div>
                     </div>
                 `;
